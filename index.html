@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>门票收银与数据管理系统</title>
+    <style>
+        /* 复古纸张与木质暖色调主题 (Vintage / Retro Palette) */
+        :root {
+            --bg-color: #f4efe6;
+            --card-bg: #fcf9f2;
+            --primary-color: #8c2d19; /* 经典复古红/红棕 */
+            --primary-hover: #6e2212;
+            --accent-color: #d99b26; /* 复古黄/金黄 */
+            --border-color: #d1c7b7;
+            --text-color: #3b3228;
+            --text-light: #706354;
+            --shadow: 0 4px 10px rgba(60, 45, 30, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Georgia', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', serif, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 15px;
+            max-width: 1000px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+
+        /* 顶部状态栏 */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            padding: 15px 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header-left {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header-left .date-display {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .header-left .time-display {
+            font-size: 0.95rem;
+            color: var(--text-light);
+        }
+
+        .header-right {
+            display: flex;
+            gap: 20px;
+            text-align: right;
+        }
+
+        .stat-box {
+            background: #f3ede2;
+            padding: 8px 15px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        /* 卡片通用样式 */
+        .card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* 表单布局 */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        label {
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+
+        select, input {
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            background-color: #fff;
+            color: var(--text-color);
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        select:focus, input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .custom-input {
+            margin-top: 5px;
+            display: none; /* 默认隐藏，选自定义时显示 */
+        }
+
+        /* 门票选择区块 (多选/组合) */
+        .ticket-box {
+            border: 1px dashed var(--border-color);
+            padding: 12px;
+            border-radius: 6px;
+            background-color: #fcf6ed;
+            margin-bottom: 15px;
+        }
+
+        .ticket-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .ticket-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .ticket-type-label {
+            width: 90px;
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+
+        /* 按钮与汇总 */
+        .summary-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .total-display {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: #fff;
+            padding: 10px 24px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        /* 表格样式 */
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #eee7da;
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f7f3eb;
+        }
+
+        /* 切换标签页 (今日 / 历史) */
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .tab-btn {
+            padding: 8px 18px;
+            background: #e2d9ca;
+            border: 1px solid var(--border-color);
+            border-radius: 5px 5px 0 0;
+            cursor: pointer;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+
+        .tab-btn.active {
+            background: var(--card-bg);
+            border-bottom: 2px solid var(--card-bg);
+            color: var(--primary-color);
+        }
+
+        /* 打印样式控制 */
+        @media print {
+            body {
+                background: white;
+                color: black;
+                padding: 0;
+            }
+            header, .card:first-of-type, .nav-tabs, .btn, .no-print {
+                display: none !important;
+            }
+            .card {
+                border: none;
+                box-shadow: none;
+                padding: 0;
+            }
+            table {
+                border: 1px solid #000;
+            }
+            th, td {
+                border: 1px solid #000;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 顶部状态栏 -->
+    <header>
+        <div class="header-left">
+            <span class="date-display" id="currentDate">----年--月--日</span>
+            <span class="time-display" id="currentTime">00:00:00</span>
+        </div>
+        <div class="header-right">
+            <div class="stat-box">
+                <div class="stat-label">今日总结算人数</div>
+                <div class="stat-value" id="headerTotalGuests">0 人</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">今日总结算收入</div>
+                <div class="stat-value" id="headerTotalRevenue">RM0.00</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 录入表单 -->
+    <div class="card">
+        <div class="card-title">🎟️ 门票收款录入</div>
+        
+        <form id="ticketForm" onsubmit="handleFormSubmit(event)">
+            <!-- 门票组合多选区域 -->
+            <div class="ticket-box">
+                <label style="margin-bottom: 10px; display: block;">设置门票数量与价格（支持同时勾选/填写）：</label>
+                
+                <!-- 成人票 -->
+                <div class="ticket-row">
+                    <span class="ticket-type-label">👨 成人票：</span>
+                    <select id="adultQtySelect" onchange="toggleCustomQty('adultQtySelect', 'adultCustomQty')">
+                        <option value="0">0 人</option>
+                        <option value="1">1 人</option>
+                        <option value="2">2 人</option>
+                        <option value="3">3 人</option>
+                        <option value="4">4 人</option>
+                        <option value="5">5 人</option>
+                        <option value="6">6 人</option>
+                        <option value="7">7 人</option>
+                        <option value="8">8 人</option>
+                        <option value="9">9 人</option>
+                        <option value="10">10 人</option>
+                        <option value="custom">自定义人数...</option>
+                    </select>
+                    <input type="number" id="adultCustomQty" class="custom-input" placeholder="1-100" min="1" max="100" style="width: 90px;">
+                    
+                    <span style="margin-left: 10px;">单价：</span>
+                    <select id="adultPriceSelect" onchange="toggleCustomPrice('adultPriceSelect', 'adultCustomPrice')">
+                        <option value="35">RM35 (标准)</option>
+                        <option value="custom">自定义单价...</option>
+                    </select>
+                    <input type="number" id="adultCustomPrice" class="custom-input" placeholder="1-999" min="1" max="999" style="width: 100px;">
+                </div>
+
+                <!-- 儿童票 -->
+                <div class="ticket-row">
+                    <span class="ticket-type-label">🧒 儿童票：</span>
+                    <select id="childQtySelect" onchange="toggleCustomQty('childQtySelect', 'childCustomQty')">
+                        <option value="0">0 人</option>
+                        <option value="1">1 人</option>
+                        <option value="2">2 人</option>
+                        <option value="3">3 人</option>
+                        <option value="4">4 人</option>
+                        <option value="5">5 人</option>
+                        <option value="6">6 人</option>
+                        <option value="7">7 人</option>
+                        <option value="8">8 人</option>
+                        <option value="9">9 人</option>
+                        <option value="10">10 人</option>
+                        <option value="custom">自定义人数...</option>
+                    </select>
+                    <input type="number" id="childCustomQty" class="custom-input" placeholder="1-100" min="1" max="100" style="width: 90px;">
+                    
+                    <span style="margin-left: 10px;">单价：</span>
+                    <select id="childPriceSelect" onchange="toggleCustomPrice('childPriceSelect', 'childCustomPrice')">
+                        <option value="20">RM20 (标准)</option>
+                        <option value="custom">自定义单价...</option>
+                    </select>
+                    <input type="number" id="childCustomPrice" class="custom-input" placeholder="1-999" min="1" max="999" style="width: 100px;">
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <!-- 付款方式 -->
+                <div class="form-group">
+                    <label>💳 付款方式：</label>
+                    <select id="paymentMethod" required>
+                        <option value="现金">💵 现金</option>
+                        <option value="Touch 'n Go (TnG)">📱 Touch 'n Go</option>
+                        <option value="支付宝">📱 支付宝</option>
+                        <option value="微信支付">📱 微信支付</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 底部汇总提交 -->
+            <div class="summary-bar">
+                <div>
+                    <span>总人数：<b id="formTotalCount">0</b> 人 | </span>
+                    <span class="total-display">应收金额：RM <span id="formTotalPrice">0.00</span></span>
+                </div>
+                <button type="submit" class="btn">确认提交</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- 选项卡切换 -->
+    <div class="nav-tabs">
+        <button class="tab-btn active" id="tabToday" onclick="switchTab('today')">📋 今日记录与打印</button>
+        <button class="tab-btn" id="tabHistory" onclick="switchTab('history')">📜 历史全部记录</button>
+    </div>
+
+    <!-- 记录显示列表 -->
+    <div class="card">
+        <div class="card-title">
+            <span id="tableTitle">今日售票记录</span>
+            <button class="btn btn-secondary no-print" onclick="window.print()">🖨️ 打印当前记录表</button>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>日期时间</th>
+                        <th>总人数</th>
+                        <th>门票价格明细</th>
+                        <th>付款方式</th>
+                        <th>总价格</th>
+                    </tr>
+                </thead>
+                <tbody id="recordsTableBody">
+                    <!-- 动态生成数据行 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let allRecords = [];
+        let currentTab = 'today';
+
+        // 初始化时间
+        function updateClock() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+
+            document.getElementById('currentDate').innerText = `${year}年${month}月${day}日`;
+            document.getElementById('currentTime').innerText = `${hours}:${minutes}:${seconds}`;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // 切换自定义输入框显示
+        function toggleCustomQty(selectId, inputId) {
+            const select = document.getElementById(selectId);
+            const input = document.getElementById(inputId);
+            if (select.value === 'custom') {
+                input.style.display = 'inline-block';
+                input.required = true;
+            } else {
+                input.style.display = 'none';
+                input.required = false;
+            }
+            calculateFormTotal();
+        }
+
+        function toggleCustomPrice(selectId, inputId) {
+            const select = document.getElementById(selectId);
+            const input = document.getElementById(inputId);
+            if (select.value === 'custom') {
+                input.style.display = 'inline-block';
+                input.required = true;
+            } else {
+                input.style.display = 'none';
+                input.required = false;
+            }
+            calculateFormTotal();
+        }
+
+        // 计算表单实时总价与人数
+        function getTicketValues() {
+            // 成人
+            let adultQtySelect = document.getElementById('adultQtySelect').value;
+            let adultQty = adultQtySelect === 'custom' ? parseInt(document.getElementById('adultCustomQty').value || 0) : parseInt(adultQtySelect);
+            let adultPriceSelect = document.getElementById('adultPriceSelect').value;
+            let adultPrice = adultPriceSelect === 'custom' ? parseFloat(document.getElementById('adultCustomPrice').value || 0) : parseFloat(adultPriceSelect);
+
+            // 儿童
+            let childQtySelect = document.getElementById('childQtySelect').value;
+            let childQty = childQtySelect === 'custom' ? parseInt(document.getElementById('childCustomQty').value || 0) : parseInt(childQtySelect);
+            let childPriceSelect = document.getElementById('childPriceSelect').value;
+            let childPrice = childPriceSelect === 'custom' ? parseFloat(document.getElementById('childCustomPrice').value || 0) : parseFloat(childPriceSelect);
+
+            let totalCount = adultQty + childQty;
+            let totalPrice = (adultQty * adultPrice) + (childQty * childPrice);
+
+            let detailsArr = [];
+            if (adultQty > 0) detailsArr.push(`成人票 x${adultQty} (单价¥${adultPrice})`);
+            if (childQty > 0) detailsArr.push(`儿童票 x${childQty} (单价¥${childPrice})`);
+
+            return {
+                adultQty,
+                childQty,
+                totalCount,
+                totalPrice,
+                details: detailsArr.join(', ') || '无门票'
+            };
+        }
+
+        function calculateFormTotal() {
+            const data = getTicketValues();
+            document.getElementById('formTotalCount').innerText = data.totalCount;
+            document.getElementById('formTotalPrice').innerText = data.totalPrice.toFixed(2);
+        }
+
+        // 监听所有输入变动
+        document.querySelectorAll('input, select').forEach(element => {
+            element.addEventListener('input', calculateFormTotal);
+            element.addEventListener('change', calculateFormTotal);
+        });
+
+        // 提交数据到后端
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            const ticketData = getTicketValues();
+
+            if (ticketData.totalCount <= 0) {
+                alert('请至少选择或输入 1 位客人的门票！');
+                return;
+            }
+
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const dateStr = `${year}-${month}-${day}`;
+            const timeStr = now.toTimeString().split(' ')[0];
+
+            const payload = {
+                date: dateStr,
+                time: timeStr,
+                adultCount: ticketData.adultQty,
+                childCount: ticketData.childQty,
+                totalCount: ticketData.totalCount,
+                paymentMethod: document.getElementById('paymentMethod').value,
+                totalPrice: ticketData.totalPrice,
+                details: ticketData.details
+            };
+
+            try {
+                const res = await fetch('/api/records', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    // 重置表单
+                    document.getElementById('ticketForm').reset();
+                    document.getElementById('adultCustomQty').style.display = 'none';
+                    document.getElementById('adultCustomPrice').style.display = 'none';
+                    document.getElementById('childCustomQty').style.display = 'none';
+                    document.getElementById('childCustomPrice').style.display = 'none';
+                    calculateFormTotal();
+                    // 重新拉取数据
+                    fetchRecords();
+                } else {
+                    alert('提交失败，请重试');
+                }
+            } catch (err) {
+                alert('网络连接失败，请检查服务器是否正常运行');
+            }
+        }
+
+        // 获取并渲染数据
+        async function fetchRecords() {
+            try {
+                const res = await fetch('/api/records');
+                allRecords = await res.json();
+                renderUI();
+            } catch (e) {
+                console.error("数据拉取失败", e);
+            }
+        }
+
+        function renderUI() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const todayStr = `${year}-${month}-${day}`;
+
+            // 计算今日汇总
+            let todayGuests = 0;
+            let todayRevenue = 0;
+
+            const todayRecords = allRecords.filter(r => r.date === todayStr);
+            todayRecords.forEach(r => {
+                todayGuests += (r.totalCount || 0);
+                todayRevenue += (r.totalPrice || 0);
+            });
+
+            document.getElementById('headerTotalGuests').innerText = `${todayGuests} 人`;
+            document.getElementById('headerTotalRevenue').innerText = `¥ ${todayRevenue.toFixed(2)}`;
+
+            // 渲染表格
+            const tbody = document.getElementById('recordsTableBody');
+            tbody.innerHTML = '';
+
+            const displayRecords = currentTab === 'today' ? todayRecords : allRecords;
+
+            if (displayRecords.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="color: var(--text-light); padding: 20px;">暂无记录</td></tr>`;
+                return;
+            }
+
+            // 倒序展示最新的记录
+            [...displayRecords].reverse().forEach(r => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${r.date} ${r.time}</td>
+                    <td><b>${r.totalCount}</b> 人</td>
+                    <td>${r.details || '-'}</td>
+                    <td>${r.paymentMethod}</td>
+                    <td><b style="color: var(--primary-color);">¥ ${r.totalPrice.toFixed(2)}</b></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.getElementById('tabToday').classList.toggle('active', tab === 'today');
+            document.getElementById('tabHistory').classList.toggle('active', tab === 'history');
+            document.getElementById('tableTitle').innerText = tab === 'today' ? '今日售票记录' : '历史全部售票记录';
+            renderUI();
+        }
+
+        // 每 5 秒轮询，实现多员工数据实时自动同步
+        setInterval(fetchRecords, 5000);
+
+        // 初始加载
+        fetchRecords();
+    </script>
+</body>
+</html>
