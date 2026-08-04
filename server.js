@@ -1,49 +1,91 @@
 const express = require('express');
-const fs = require('fs');
-const path = require('path');
+const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const DATA_FILE = path.join(__dirname, 'records.json');
+
+// 读取 Render 的环境变量 MONGO_URI，若无则使用默认连接字符串
+const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://woyaonpy2005_db_user:Lim050831.@cluster0.ztvp8bb.mongodb.net/ticket_system?appName=Cluster0";
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
 
-// 获取所有记录
-app.get('/api/records', (req, res) => {
-    fs.readFile(DATA_FILE, 'utf8', (err, data) => {
-        if (err) return res.json([]);
-        try {
-            res.json(JSON.parse(data || '[]'));
-        } catch (e) {
-            res.json([]);
-        }
-    });
+// 1. 连接 MongoDB Atlas 云数据库
+mongoose.connect(MONGO_URI)
+    .then(() => console.log('✅ 成功连接至 MongoDB Atlas 云数据库'))
+    .catch(err => console.error('❌ MongoDB 连接失败:', err));
+
+// 2. 数据结构定义 (支持 MYR/RMB 多币种及详细记录)
+const recordSchema = new mongoose.Schema({
+    id: { type: String, required: true, unique: true },
+    date: { type: String, required: true },
+    time: { type: String, required: true },
+    currency: { type: String, default: 'MYR' },        // 新增：币种 MYR 或 RMB
+    adultCount: { type: Number, default: 0 },
+    childCount: { type: Number, default: 0 },
+    totalCount: { type: Number, default: 0 },
+    paymentMethod: { type: String, required: true },
+    totalPrice: { type: Number, required: true },
+    details: { type: String }
+}, { timestamps: true });
+
+const Record = mongoose.model('Record', recordSchema);
+
+// 3. API 路由接口配置
+
+// GET: 获取所有售票记录
+app.get('/api/records', async (req, res) => {
+    try {
+        const records = await Record.find().sort({ createdAt: 1 });
+        res.json(records);
+    } catch (err) {
+        res.status(500).json({ error: '获取数据失败' });
+    }
 });
 
-// 保存新记录
-app.post('/api/records', (req, res) => {
-    const newRecord = req.body;
-    fs.readFile(DATA_FILE, 'utf8', (err, data) => {
-        let records = [];
-        if (!err && data) {
-            try {
-                records = JSON.parse(data);
-            } catch (e) {
-                records = [];
-            }
-        }
-        records.push(newRecord);
+// POST: 添加新售票记录
+app.post('/api/records', async (req, res) => {
+    try {
+        const newRecord = new Record(req.body);
+        await newRecord.save();
+        res.json({ success: true, record: newRecord });
+    } catch (err) {
+        res.status(500).json({ error: '数据保存失败' });
+    }
+});
 
-        fs.writeFile(DATA_FILE, JSON.stringify(records, null, 2), (err) => {
-            if (err) return res.status(500).json({ error: '数据写入失败' });
-            res.json({ success: true });
-        });
-    });
+// PUT: 修改门票记录
+app.put('/api/records/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updatedRecord = await Record.findOneAndUpdate({ id: id }, req.body, { new: true });
+        if (!updatedRecord) return res.status(404).json({ error: '未找到该记录' });
+        res.json({ success: true, record: updatedRecord });
+    } catch (err) {
+        res.status(500).json({ error: '更新失败' });
+    }
+});
+
+// DELETE: 删除门票记录
+app.delete('/api/records/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const deletedRecord = await Record.findOneAndDelete({ id: id });
+        if (!deletedRecord) return res.status(404).json({ error: '未找到要删除的记录' });
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: '删除失败' });
+    }
+});
+
+// 4. 路由兜底，确保前端页面能正常加载
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    console.log(`🚀 服务已启动，监听端口: ${PORT}`);
 });
