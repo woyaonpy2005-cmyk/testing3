@@ -7,7 +7,6 @@
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* 针对打印样式优化 */
         @media print {
             body * {
                 visibility: hidden;
@@ -27,29 +26,21 @@
         }
     </style>
 </head>
-<body class="bg-slate-100 font-sans text-slate-800 min-h-screen">
+<body class="bg-gray-100 font-sans text-gray-800 min-h-screen">
 
     <div class="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
         
         <!-- 页头 -->
-        <header class="flex flex-col sm:flex-row justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-slate-200 gap-4">
-            <div>
-                <h1 class="text-2xl font-bold text-slate-900">🎟️ 门票收银与管理系统</h1>
-                <p class="text-xs text-slate-500 mt-1">云端数据实时同步中</p>
-            </div>
-            <!-- 营业时间显示 -->
-            <div class="bg-indigo-50 border border-indigo-100 rounded-lg px-4 py-2 text-right">
-                <div class="text-xs font-bold text-indigo-800">🕒 营业时间</div>
-                <div class="text-xs text-indigo-600 mt-0.5">周一至周日：09:00 - 18:00</div>
-            </div>
+        <header class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+            <h1 class="text-2xl font-bold text-gray-900">🎟️ 门票收银与管理系统</h1>
         </header>
 
         <!-- 顶部功能选项卡 -->
-        <div class="flex border-b border-slate-200 bg-white rounded-t-xl px-4 pt-2 gap-2 no-print">
-            <button id="tab-pos" onclick="switchTab('pos')" class="py-2.5 px-5 font-medium text-sm rounded-t-lg transition border-b-2 border-indigo-600 text-indigo-600 bg-indigo-50/50">
+        <div class="flex border-b border-gray-200 bg-white rounded-t-xl px-4 pt-2 gap-2 no-print">
+            <button id="tab-pos" onclick="switchTab('pos')" class="py-2.5 px-5 font-medium text-sm rounded-t-lg transition border-b-2 border-blue-600 text-blue-600 bg-blue-50/50">
                 🛒 收银开票
             </button>
-            <button id="tab-history" onclick="switchTab('history')" class="py-2.5 px-5 font-medium text-sm rounded-t-lg transition border-b-2 border-transparent text-slate-500 hover:text-slate-700">
+            <button id="tab-history" onclick="switchTab('history')" class="py-2.5 px-5 font-medium text-sm rounded-t-lg transition border-b-2 border-transparent text-gray-500 hover:text-gray-700">
                 📜 历史记录与统计
             </button>
         </div>
@@ -57,101 +48,125 @@
         <!-- ================= 模块 1: 收银界面 ================= -->
         <div id="view-pos" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            <!-- 左侧：数量与价格设置 -->
+            <!-- 左侧：设置门票数量与价格 -->
             <div class="lg:col-span-2 space-y-6">
                 
-                <!-- 票种与价格配置卡片 -->
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-lg font-semibold text-slate-800 flex items-center gap-2">
-                            <span>⚙️</span> 设置门票数量与价格
-                        </h2>
-                        <!-- 整合后的币种选择器 -->
-                        <div class="flex items-center gap-2 bg-slate-50 p-1.5 rounded-lg border border-slate-200">
-                            <span class="text-xs font-semibold text-slate-600 pl-1">结算币种:</span>
-                            <select id="currency-select" onchange="updateCurrencySymbol()" class="bg-white text-xs font-bold border border-slate-300 rounded px-2 py-1 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                                <option value="MYR" selected>RM (吉林特)</option>
-                                <option value="RMB">¥ (人民币)</option>
-                            </select>
-                        </div>
-                    </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                        <span>⚙️</span> 设置门票数量与价格
+                    </h2>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        
                         <!-- 成人票配置 -->
-                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                        <div class="p-4 rounded-xl bg-gray-50 border border-gray-200 space-y-3">
                             <div class="flex justify-between items-center">
-                                <span class="font-bold text-slate-700">👨 成人票</span>
-                                <span class="text-xs text-slate-400">单价</span>
+                                <span class="font-bold text-gray-700">👨 成人票</span>
                             </div>
-                            <div class="flex items-center gap-2">
-                                <span class="currency-sym text-slate-500 font-bold">RM</span>
-                                <input type="number" id="adult-price" value="50" min="0" onchange="calculateTotal()" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            
+                            <!-- 3个快捷选项：RM 30, RMB 60, 自定义 -->
+                            <div class="grid grid-cols-3 gap-2">
+                                <button type="button" onclick="setPrice('adult', 30, 'MYR', this)" class="adult-opt-btn py-1.5 px-2 text-xs font-bold rounded-lg border border-blue-600 bg-blue-50 text-blue-600">
+                                    RM 30
+                                </button>
+                                <button type="button" onclick="setPrice('adult', 60, 'RMB', this)" class="adult-opt-btn py-1.5 px-2 text-xs font-bold rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50">
+                                    RMB 60
+                                </button>
+                                <button type="button" onclick="enableCustomPrice('adult', this)" class="adult-opt-btn py-1.5 px-2 text-xs font-bold rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50">
+                                    自定义
+                                </button>
                             </div>
+
+                            <!-- 价格输入与币种 -->
+                            <div class="flex items-center gap-2 pt-1">
+                                <select id="adult-currency" onchange="calculateTotal()" class="bg-white text-xs font-bold border border-gray-300 rounded px-2 py-1.5 text-gray-700">
+                                    <option value="MYR" selected>RM</option>
+                                    <option value="RMB">¥</option>
+                                </select>
+                                <input type="number" id="adult-price" value="30" min="0" onchange="calculateTotal()" class="w-full bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-gray-800 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+
+                            <!-- 数量加减 -->
                             <div class="flex items-center justify-between pt-2">
-                                <span class="text-sm text-slate-600">购票数量:</span>
+                                <span class="text-sm text-gray-600">购票数量:</span>
                                 <div class="flex items-center gap-2">
-                                    <button onclick="changeCount('adult', -1)" class="w-8 h-8 rounded-lg bg-white border border-slate-300 text-slate-600 hover:bg-slate-100 font-bold text-lg flex items-center justify-center">-</button>
-                                    <input type="number" id="adult-count" value="1" min="0" onchange="calculateTotal()" class="w-12 text-center font-bold text-slate-800 bg-transparent">
-                                    <button onclick="changeCount('adult', 1)" class="w-8 h-8 rounded-lg bg-white border border-slate-300 text-slate-600 hover:bg-slate-100 font-bold text-lg flex items-center justify-center">+</button>
+                                    <button onclick="changeCount('adult', -1)" class="w-8 h-8 rounded-lg bg-white border border-gray-300 text-gray-600 hover:bg-gray-100 font-bold text-lg flex items-center justify-center">-</button>
+                                    <input type="number" id="adult-count" value="1" min="0" onchange="calculateTotal()" class="w-12 text-center font-bold text-gray-800 bg-transparent">
+                                    <button onclick="changeCount('adult', 1)" class="w-8 h-8 rounded-lg bg-white border border-gray-300 text-gray-600 hover:bg-gray-100 font-bold text-lg flex items-center justify-center">+</button>
                                 </div>
                             </div>
                         </div>
 
                         <!-- 儿童/长者票配置 -->
-                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                        <div class="p-4 rounded-xl bg-gray-50 border border-gray-200 space-y-3">
                             <div class="flex justify-between items-center">
-                                <span class="font-bold text-slate-700">👶 儿童 / 长者票</span>
-                                <span class="text-xs text-slate-400">单价</span>
+                                <span class="font-bold text-gray-700">👶 儿童 / 长者票</span>
                             </div>
-                            <div class="flex items-center gap-2">
-                                <span class="currency-sym text-slate-500 font-bold">RM</span>
-                                <input type="number" id="child-price" value="25" min="0" onchange="calculateTotal()" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500">
+
+                            <!-- 3个快捷选项：RM 15, RMB 30, 自定义 -->
+                            <div class="grid grid-cols-3 gap-2">
+                                <button type="button" onclick="setPrice('child', 15, 'MYR', this)" class="child-opt-btn py-1.5 px-2 text-xs font-bold rounded-lg border border-blue-600 bg-blue-50 text-blue-600">
+                                    RM 15
+                                </button>
+                                <button type="button" onclick="setPrice('child', 30, 'RMB', this)" class="child-opt-btn py-1.5 px-2 text-xs font-bold rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50">
+                                    RMB 30
+                                </button>
+                                <button type="button" onclick="enableCustomPrice('child', this)" class="child-opt-btn py-1.5 px-2 text-xs font-bold rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50">
+                                    自定义
+                                </button>
                             </div>
+
+                            <!-- 价格输入与币种 -->
+                            <div class="flex items-center gap-2 pt-1">
+                                <select id="child-currency" onchange="calculateTotal()" class="bg-white text-xs font-bold border border-gray-300 rounded px-2 py-1.5 text-gray-700">
+                                    <option value="MYR" selected>RM</option>
+                                    <option value="RMB">¥</option>
+                                </select>
+                                <input type="number" id="child-price" value="15" min="0" onchange="calculateTotal()" class="w-full bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-gray-800 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+
+                            <!-- 数量加减 -->
                             <div class="flex items-center justify-between pt-2">
-                                <span class="text-sm text-slate-600">购票数量:</span>
+                                <span class="text-sm text-gray-600">购票数量:</span>
                                 <div class="flex items-center gap-2">
-                                    <button onclick="changeCount('child', -1)" class="w-8 h-8 rounded-lg bg-white border border-slate-300 text-slate-600 hover:bg-slate-100 font-bold text-lg flex items-center justify-center">-</button>
-                                    <input type="number" id="child-count" value="0" min="0" onchange="calculateTotal()" class="w-12 text-center font-bold text-slate-800 bg-transparent">
-                                    <button onclick="changeCount('child', 1)" class="w-8 h-8 rounded-lg bg-white border border-slate-300 text-slate-600 hover:bg-slate-100 font-bold text-lg flex items-center justify-center">+</button>
+                                    <button onclick="changeCount('child', -1)" class="w-8 h-8 rounded-lg bg-white border border-gray-300 text-gray-600 hover:bg-gray-100 font-bold text-lg flex items-center justify-center">-</button>
+                                    <input type="number" id="child-count" value="0" min="0" onchange="calculateTotal()" class="w-12 text-center font-bold text-gray-800 bg-transparent">
+                                    <button onclick="changeCount('child', 1)" class="w-8 h-8 rounded-lg bg-white border border-gray-300 text-gray-600 hover:bg-gray-100 font-bold text-lg flex items-center justify-center">+</button>
                                 </div>
                             </div>
                         </div>
+
                     </div>
                 </div>
 
-                <!-- 支付方式与备注 -->
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
-                    <h2 class="text-lg font-semibold text-slate-800">💳 选择支付方式</h2>
+                <!-- 支付方式 -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-4">
+                    <h2 class="text-lg font-semibold text-gray-800">💳 选择支付方式</h2>
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         <label class="cursor-pointer">
                             <input type="radio" name="payment" value="现金" checked class="peer sr-only">
-                            <div class="p-3 text-center border-2 border-slate-200 rounded-xl peer-checked:border-indigo-600 peer-checked:bg-indigo-50 font-semibold text-slate-700 transition">
+                            <div class="p-3 text-center border-2 border-gray-200 rounded-xl peer-checked:border-blue-600 peer-checked:bg-blue-50 font-semibold text-gray-700 transition">
                                 💵 现金
                             </div>
                         </label>
                         <label class="cursor-pointer">
                             <input type="radio" name="payment" value="刷卡" class="peer sr-only">
-                            <div class="p-3 text-center border-2 border-slate-200 rounded-xl peer-checked:border-indigo-600 peer-checked:bg-indigo-50 font-semibold text-slate-700 transition">
+                            <div class="p-3 text-center border-2 border-gray-200 rounded-xl peer-checked:border-blue-600 peer-checked:bg-blue-50 font-semibold text-gray-700 transition">
                                 💳 刷卡
                             </div>
                         </label>
                         <label class="cursor-pointer">
                             <input type="radio" name="payment" value="Touch n Go" class="peer sr-only">
-                            <div class="p-3 text-center border-2 border-slate-200 rounded-xl peer-checked:border-indigo-600 peer-checked:bg-indigo-50 font-semibold text-slate-700 transition">
+                            <div class="p-3 text-center border-2 border-gray-200 rounded-xl peer-checked:border-blue-600 peer-checked:bg-blue-50 font-semibold text-gray-700 transition">
                                 📱 T&G
                             </div>
                         </label>
                         <label class="cursor-pointer">
                             <input type="radio" name="payment" value="微信/支付宝" class="peer sr-only">
-                            <div class="p-3 text-center border-2 border-slate-200 rounded-xl peer-checked:border-indigo-600 peer-checked:bg-indigo-50 font-semibold text-slate-700 transition">
+                            <div class="p-3 text-center border-2 border-gray-200 rounded-xl peer-checked:border-blue-600 peer-checked:bg-blue-50 font-semibold text-gray-700 transition">
                                 🌐 扫码支付
                             </div>
                         </label>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">订单备注 (选填)</label>
-                        <input type="text" id="order-remark" placeholder="如: 团体优惠 / 导游带队" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     </div>
                 </div>
 
@@ -159,13 +174,13 @@
 
             <!-- 右侧：结算与小票预览 -->
             <div class="space-y-6">
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
-                    <h2 class="text-lg font-semibold text-slate-800">🧾 结算清单</h2>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-4">
+                    <h2 class="text-lg font-semibold text-gray-800">🧾 结算清单</h2>
 
-                    <div id="receipt-print-area" class="border border-dashed border-slate-300 p-4 rounded-lg bg-slate-50 space-y-3 font-mono text-sm">
-                        <div class="text-center pb-2 border-b border-slate-200">
-                            <h3 class="font-bold text-base text-slate-800">景区/场馆门票存根</h3>
-                            <p class="text-xs text-slate-500 mt-1" id="receipt-date">日期: --</p>
+                    <div id="receipt-print-area" class="border border-dashed border-gray-300 p-4 rounded-lg bg-gray-50 space-y-3 font-mono text-sm">
+                        <div class="text-center pb-2 border-b border-gray-200">
+                            <h3 class="font-bold text-base text-gray-800">门票存根</h3>
+                            <p class="text-xs text-gray-500 mt-1" id="receipt-date">日期: --</p>
                         </div>
                         <div class="space-y-1">
                             <div class="flex justify-between">
@@ -176,18 +191,18 @@
                                 <span>儿童/长者票:</span>
                                 <span id="summary-child">0 张</span>
                             </div>
-                            <div class="flex justify-between border-t border-slate-200 pt-1 font-bold">
+                            <div class="flex justify-between border-t border-gray-200 pt-1 font-bold">
                                 <span>总人数:</span>
                                 <span id="summary-total-count">0 人</span>
                             </div>
                         </div>
-                        <div class="border-t border-slate-200 pt-2 flex justify-between items-end">
-                            <span class="font-bold text-slate-700">应收金额:</span>
-                            <span class="text-xl font-bold text-indigo-600"><span class="currency-sym">RM</span> <span id="summary-total-price">0.00</span></span>
+                        <div class="border-t border-gray-200 pt-2 flex justify-between items-end">
+                            <span class="font-bold text-gray-700">应收金额:</span>
+                            <span class="text-xl font-bold text-blue-600" id="summary-total-price">RM 0.00</span>
                         </div>
                     </div>
 
-                    <button onclick="submitOrder()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-indigo-200 transition text-center flex justify-center items-center gap-2">
+                    <button onclick="submitOrder()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-blue-100 transition text-center flex justify-center items-center gap-2">
                         <span>✅ 确认收款并出票</span>
                     </button>
                 </div>
@@ -198,48 +213,37 @@
         <!-- ================= 模块 2: 历史记录与日历筛选 ================= -->
         <div id="view-history" class="hidden space-y-6">
             
-            <!-- 日历与筛选工具栏 -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4">
-                <div class="flex items-center gap-3 w-full sm:w-auto">
-                    <label class="text-sm font-semibold text-slate-700 whitespace-nowrap">📅 选择历史日期:</label>
-                    <!-- 标准日历选择器 -->
-                    <input type="date" id="history-date-picker" onchange="renderHistoryTable()" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <button onclick="setCurrentDateToPicker()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-2.5 py-2 rounded-lg font-medium transition">
-                        今天
-                    </button>
-                </div>
-                
-                <div class="text-xs text-slate-500">
-                    自动筛选选定日期的门票出票数据
-                </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex items-center gap-3">
+                <label class="text-sm font-semibold text-gray-700">📅 选择日期:</label>
+                <input type="date" id="history-date-picker" onchange="renderHistoryTable()" class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button onclick="setCurrentDateToPicker()" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-2.5 py-2 rounded-lg font-medium transition">
+                    今天
+                </button>
             </div>
 
-            <!-- 当日汇总统计卡片 -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                    <div class="text-xs font-semibold text-slate-400">当前筛选日订单总数</div>
-                    <div class="text-2xl font-bold text-slate-800 mt-1" id="stat-orders">0 笔</div>
+                <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                    <div class="text-xs font-semibold text-gray-400">订单总数</div>
+                    <div class="text-2xl font-bold text-gray-800 mt-1" id="stat-orders">0 笔</div>
                 </div>
-                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                    <div class="text-xs font-semibold text-slate-400">入场总人数</div>
-                    <div class="text-2xl font-bold text-slate-800 mt-1" id="stat-visitors">0 人</div>
+                <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                    <div class="text-xs font-semibold text-gray-400">入场总人数</div>
+                    <div class="text-2xl font-bold text-gray-800 mt-1" id="stat-visitors">0 人</div>
                 </div>
-                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                    <div class="text-xs font-semibold text-slate-400">当日总营业额</div>
-                    <div class="text-2xl font-bold text-emerald-600 mt-1" id="stat-revenue">--</div>
+                <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                    <div class="text-xs font-semibold text-gray-400">当日总营业额</div>
+                    <div class="text-2xl font-bold text-emerald-600 mt-1" id="stat-revenue">0.00</div>
                 </div>
             </div>
 
-            <!-- 数据表格 -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="p-4 border-b border-slate-200 font-semibold text-slate-800 flex justify-between items-center">
-                    <span>📋 出票明细列表</span>
-                    <span class="text-xs text-slate-400 font-normal">点击“删除”可作废错误订单</span>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="p-4 border-b border-gray-200 font-semibold text-gray-800">
+                    📋 出票明细列表
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
-                            <tr class="bg-slate-50 text-slate-500 text-xs font-semibold border-b border-slate-200">
+                            <tr class="bg-gray-50 text-gray-500 text-xs font-semibold border-b border-gray-200">
                                 <th class="p-3">时间</th>
                                 <th class="p-3">单号</th>
                                 <th class="p-3">购票明细</th>
@@ -249,8 +253,7 @@
                                 <th class="p-3">操作</th>
                             </tr>
                         </thead>
-                        <tbody id="history-table-body" class="text-sm divide-y divide-slate-100">
-                            <!-- 动态加载数据 -->
+                        <tbody id="history-table-body" class="text-sm divide-y divide-gray-100">
                         </tbody>
                     </table>
                 </div>
@@ -262,21 +265,15 @@
 
     <!-- 前端逻辑 JS -->
     <script>
-        // API 基础路径
         const API_BASE = '/api/records';
-
-        // 本地内存缓存
         let allRecords = [];
 
-        // 初始化
         window.onload = function() {
             setCurrentDateToPicker();
-            updateCurrencySymbol();
             calculateTotal();
             fetchRecords();
         };
 
-        // 切换 Tab 页
         function switchTab(tab) {
             const posView = document.getElementById('view-pos');
             const historyView = document.getElementById('view-history');
@@ -287,39 +284,53 @@
                 posView.classList.remove('hidden');
                 historyView.classList.add('hidden');
                 
-                tabPos.className = "py-2.5 px-5 font-medium text-sm rounded-t-lg transition border-b-2 border-indigo-600 text-indigo-600 bg-indigo-50/50";
-                tabHistory.className = "py-2.5 px-5 font-medium text-sm rounded-t-lg transition border-b-2 border-transparent text-slate-500 hover:text-slate-700";
+                tabPos.className = "py-2.5 px-5 font-medium text-sm rounded-t-lg transition border-b-2 border-blue-600 text-blue-600 bg-blue-50/50";
+                tabHistory.className = "py-2.5 px-5 font-medium text-sm rounded-t-lg transition border-b-2 border-transparent text-gray-500 hover:text-gray-700";
             } else {
                 posView.classList.add('hidden');
                 historyView.classList.remove('hidden');
                 
-                tabHistory.className = "py-2.5 px-5 font-medium text-sm rounded-t-lg transition border-b-2 border-indigo-600 text-indigo-600 bg-indigo-50/50";
-                tabPos.className = "py-2.5 px-5 font-medium text-sm rounded-t-lg transition border-b-2 border-transparent text-slate-500 hover:text-slate-700";
+                tabHistory.className = "py-2.5 px-5 font-medium text-sm rounded-t-lg transition border-b-2 border-blue-600 text-blue-600 bg-blue-50/50";
+                tabPos.className = "py-2.5 px-5 font-medium text-sm rounded-t-lg transition border-b-2 border-transparent text-gray-500 hover:text-gray-700";
                 
                 renderHistoryTable();
             }
         }
 
-        // 设置日历选择器为今天
         function setCurrentDateToPicker() {
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('history-date-picker').value = today;
             renderHistoryTable();
         }
 
-        // 切换币种符号显示
-        function updateCurrencySymbol() {
-            const currency = document.getElementById('currency-select').value;
-            const symbol = currency === 'MYR' ? 'RM' : '¥';
+        // 设置价格与币种快捷选项
+        function setPrice(type, price, currency, btnElement) {
+            document.getElementById(`${type}-price`).value = price;
+            document.getElementById(`${type}-currency`).value = currency;
             
-            document.querySelectorAll('.currency-sym').forEach(el => {
-                el.innerText = symbol;
+            // 切换按钮高亮样式
+            const buttons = document.querySelectorAll(`.${type}-opt-btn`);
+            buttons.forEach(b => {
+                b.className = `${type}-opt-btn py-1.5 px-2 text-xs font-bold rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50`;
             });
-            
+            btnElement.className = `${type}-opt-btn py-1.5 px-2 text-xs font-bold rounded-lg border border-blue-600 bg-blue-50 text-blue-600`;
+
             calculateTotal();
         }
 
-        // 数量加减
+        // 自定义价格按钮样式
+        function enableCustomPrice(type, btnElement) {
+            const buttons = document.querySelectorAll(`.${type}-opt-btn`);
+            buttons.forEach(b => {
+                b.className = `${type}-opt-btn py-1.5 px-2 text-xs font-bold rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50`;
+            });
+            btnElement.className = `${type}-opt-btn py-1.5 px-2 text-xs font-bold rounded-lg border border-blue-600 bg-blue-50 text-blue-600`;
+            
+            const input = document.getElementById(`${type}-price`);
+            input.focus();
+            input.select();
+        }
+
         function changeCount(type, delta) {
             const input = document.getElementById(`${type}-count`);
             let val = parseInt(input.value) || 0;
@@ -328,55 +339,71 @@
             calculateTotal();
         }
 
-        // 实时计算总价和小票预览
         function calculateTotal() {
             const adultPrice = parseFloat(document.getElementById('adult-price').value) || 0;
             const adultCount = parseInt(document.getElementById('adult-count').value) || 0;
+            const adultCurrency = document.getElementById('adult-currency').value;
+
             const childPrice = parseFloat(document.getElementById('child-price').value) || 0;
             const childCount = parseInt(document.getElementById('child-count').value) || 0;
+            const childCurrency = document.getElementById('child-currency').value;
 
             const totalVisitors = adultCount + childCount;
-            const totalPrice = (adultPrice * adultCount) + (childPrice * childCount);
 
-            // 更新小票预览
-            document.getElementById('summary-adult').innerText = `${adultCount} 张`;
-            document.getElementById('summary-child').innerText = `${childCount} 张`;
+            document.getElementById('summary-adult').innerText = `${adultCount} 张 (${adultCurrency === 'RMB' ? '¥' : 'RM'}${adultPrice})`;
+            document.getElementById('summary-child').innerText = `${childCount} 张 (${childCurrency === 'RMB' ? '¥' : 'RM'}${childPrice})`;
             document.getElementById('summary-total-count').innerText = `${totalVisitors} 人`;
-            document.getElementById('summary-total-price').innerText = totalPrice.toFixed(2);
+
+            // 计算汇总文字显示
+            let totalStr = "";
+            let adultTotal = adultPrice * adultCount;
+            let childTotal = childPrice * childCount;
+
+            if (adultCurrency === childCurrency) {
+                let sym = adultCurrency === 'RMB' ? '¥' : 'RM';
+                totalStr = `${sym} ${(adultTotal + childTotal).toFixed(2)}`;
+            } else {
+                let symA = adultCurrency === 'RMB' ? '¥' : 'RM';
+                let symC = childCurrency === 'RMB' ? '¥' : 'RM';
+                totalStr = `${symA} ${adultTotal.toFixed(2)} + ${symC} ${childTotal.toFixed(2)}`;
+            }
+
+            document.getElementById('summary-total-price').innerText = totalStr;
             
             const now = new Date();
             document.getElementById('receipt-date').innerText = `日期: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
         }
 
-        // 提交订单（保存至云端 MongoDB）
         async function submitOrder() {
             const adultCount = parseInt(document.getElementById('adult-count').value) || 0;
             const childCount = parseInt(document.getElementById('child-count').value) || 0;
             const adultPrice = parseFloat(document.getElementById('adult-price').value) || 0;
             const childPrice = parseFloat(document.getElementById('child-price').value) || 0;
-            const totalPrice = (adultPrice * adultCount) + (childPrice * childCount);
-
+            
             if (adultCount + childCount === 0) {
                 alert('请至少选择一张门票！');
                 return;
             }
 
-            const currency = document.getElementById('currency-select').value;
+            const adultCurrency = document.getElementById('adult-currency').value;
+            const childCurrency = document.getElementById('child-currency').value;
             const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
-            const remark = document.getElementById('order-remark').value.trim();
+
+            const totalPrice = (adultPrice * adultCount) + (childPrice * childCount);
+            const mainCurrency = adultCurrency; // 默认主币种
 
             const now = new Date();
             const record = {
                 id: 'T' + Date.now().toString().slice(-8),
                 date: now.toISOString().split('T')[0],
                 time: now.toTimeString().split(' ')[0].substring(0, 5),
-                currency: currency,
+                currency: mainCurrency,
                 adultCount: adultCount,
                 childCount: childCount,
                 totalCount: adultCount + childCount,
                 paymentMethod: paymentMethod,
                 totalPrice: totalPrice,
-                details: remark
+                details: ''
             };
 
             try {
@@ -388,26 +415,21 @@
 
                 if (response.ok) {
                     alert('🎉 订单提交成功！');
-                    window.print(); // 调用打印
+                    window.print();
                     
-                    // 重置部分输入
                     document.getElementById('adult-count').value = 1;
                     document.getElementById('child-count').value = 0;
-                    document.getElementById('order-remark').value = '';
                     calculateTotal();
-                    
-                    // 重新拉取最新数据
                     fetchRecords();
                 } else {
-                    alert('❌ 保存失败，请检查网络连接');
+                    alert('❌ 保存失败');
                 }
             } catch (err) {
                 console.error(err);
-                alert('❌ 无法连接至服务器');
+                alert('❌ 网络连接错误');
             }
         }
 
-        // 从后端 API 拉取所有记录
         async function fetchRecords() {
             try {
                 const res = await fetch(API_BASE);
@@ -420,13 +442,11 @@
             }
         }
 
-        // 渲染历史数据表格与统计
         function renderHistoryTable() {
             const selectedDate = document.getElementById('history-date-picker').value;
             const tbody = document.getElementById('history-table-body');
             tbody.innerHTML = '';
 
-            // 按选定日期过滤
             const filteredRecords = allRecords.filter(r => r.date === selectedDate);
 
             let totalVisitors = 0;
@@ -434,7 +454,7 @@
             let totalRevenueRMB = 0;
 
             if (filteredRecords.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-400">该日期暂无出票记录</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-gray-400">暂无出票记录</td></tr>`;
             } else {
                 filteredRecords.forEach(record => {
                     totalVisitors += record.totalCount;
@@ -447,39 +467,33 @@
                     }
 
                     const tr = document.createElement('tr');
-                    tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+                    tr.className = "hover:bg-gray-50 transition border-b border-gray-100";
                     tr.innerHTML = `
-                        <td class="p-3 text-slate-600">${record.time}</td>
-                        <td class="p-3 font-mono text-xs text-slate-500">${record.id}</td>
-                        <td class="p-3 text-slate-800">
-                            成人:${record.adultCount} | 儿童:${record.childCount}
-                            ${record.details ? `<span class="text-xs text-slate-400 ml-1">(${record.details})</span>` : ''}
-                        </td>
-                        <td class="p-3 font-bold text-slate-700">${record.totalCount}</td>
-                        <td class="p-3"><span class="px-2 py-0.5 text-xs bg-slate-100 rounded text-slate-600">${record.paymentMethod}</span></td>
-                        <td class="p-3 font-bold text-indigo-600">${sym} ${record.totalPrice.toFixed(2)}</td>
+                        <td class="p-3 text-gray-600">${record.time}</td>
+                        <td class="p-3 font-mono text-xs text-gray-500">${record.id}</td>
+                        <td class="p-3 text-gray-800">成人:${record.adultCount} | 儿童:${record.childCount}</td>
+                        <td class="p-3 font-bold text-gray-700">${record.totalCount}</td>
+                        <td class="p-3"><span class="px-2 py-0.5 text-xs bg-gray-100 rounded text-gray-600">${record.paymentMethod}</span></td>
+                        <td class="p-3 font-bold text-blue-600">${sym} ${record.totalPrice.toFixed(2)}</td>
                         <td class="p-3">
-                            <button onclick="deleteRecord('${record.id}')" class="text-xs text-rose-500 hover:text-rose-700 font-semibold">删除</button>
+                            <button onclick="deleteRecord('${record.id}')" class="text-xs text-red-500 hover:text-red-700 font-semibold">删除</button>
                         </td>
                     `;
                     tbody.appendChild(tr);
                 });
             }
 
-            // 更新汇总统计
             document.getElementById('stat-orders').innerText = `${filteredRecords.length} 笔`;
             document.getElementById('stat-visitors').innerText = `${totalVisitors} 人`;
             
-            // 拼接币种统计
             let revenueText = [];
             if (totalRevenueRM > 0 || totalRevenueRMB === 0) revenueText.push(`RM ${totalRevenueRM.toFixed(2)}`);
             if (totalRevenueRMB > 0) revenueText.push(`¥ ${totalRevenueRMB.toFixed(2)}`);
             document.getElementById('stat-revenue').innerText = revenueText.join(' / ');
         }
 
-        // 删除记录
         async function deleteRecord(id) {
-            if (!confirm(`确定要作废/删除单号为 ${id} 的记录吗？`)) return;
+            if (!confirm(`确定要删除单号 ${id} 吗？`)) return;
 
             try {
                 const res = await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
@@ -490,7 +504,7 @@
                     alert('删除失败');
                 }
             } catch (err) {
-                alert('网络请求异常');
+                alert('网络连接错误');
             }
         }
     </script>
