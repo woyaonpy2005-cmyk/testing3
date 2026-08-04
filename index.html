@@ -411,7 +411,7 @@
             </div>
             <div class="stat-box">
                 <div class="stat-label">今日总结算收入</div>
-                <div class="stat-value" id="headerTotalRevenue">RM0.00 / RMB0.00</div>
+                <div class="stat-value" id="headerTotalRevenue">RM 0.00 / RMB 0.00</div>
             </div>
         </div>
     </header>
@@ -446,7 +446,7 @@
                     
                     <span style="margin-left: 10px;">单价：</span>
                     <select id="adultPriceSelect" onchange="toggleCustomPrice('adultPriceSelect', 'adultCustomPrice')">
-                        <option value="RM35">RM35 (标准)</option>
+                        <option value="RM30">RM30 (标准)</option>
                         <option value="RMB60">RMB60</option>
                         <option value="custom">自定义单价...</option>
                     </select>
@@ -499,7 +499,7 @@
             <div class="summary-bar">
                 <div>
                     <span>总人数：<b id="formTotalCount">0</b> 人 | </span>
-                    <span class="total-display">应收金额：RM <span id="formTotalPriceRM">0.00</span> / RMB <span id="formTotalPriceRMB">0.00</span> (换算总计: RMB <span id="formTotalConvertedRMB">0.00</span>)</span>
+                    <span class="total-display">应收金额：RM <span id="formTotalPriceRM">0.00</span> / RMB <span id="formTotalPriceRMB">0.00</span></span>
                 </div>
                 <button type="submit" class="btn">确认提交</button>
             </div>
@@ -567,7 +567,7 @@
             <div class="card-title">📊 本月数据可视化分析</div>
             <div class="charts-container">
                 <div class="chart-box">
-                    <h4 style="text-align: center; margin-bottom: 10px; color: var(--text-light);">每日营收趋势 (RMB 换算总计)</h4>
+                    <h4 style="text-align: center; margin-bottom: 10px; color: var(--text-light);">每日收益趋势 (RMB 换算总计)</h4>
                     <canvas id="revenueChart"></canvas>
                 </div>
                 <div class="chart-box">
@@ -603,7 +603,7 @@
                 </div>
                 <div class="form-group" style="margin-bottom: 15px;">
                     <label>修改后总价格：</label>
-                    <input type="text" id="editTotalPrice" required placeholder="如: RM35 / RMB60">
+                    <input type="text" id="editTotalPrice" required placeholder="如: RM30 / RMB60">
                 </div>
                 <div style="display: flex; justify-content: flex-end; gap: 10px;">
                     <button type="button" class="btn btn-secondary" onclick="closeEditModal()">取消</button>
@@ -695,8 +695,7 @@
             if (childPriceObj.unit === 'RM') totalPriceRM += childQty * childPriceObj.price;
             else totalPriceRMB += childQty * childPriceObj.price;
 
-            // 规定的换算逻辑：RM30 = RMB60 (比例 1:2)；RM20 = RMB35 (比例 1:1.75)
-            // 默认换算比例统一计算为：成人RM相当于2倍RMB，儿童RM相当于1.75倍RMB
+            // 固定换算逻辑：RM30 = RMB60 (比例 1:2)；RM20 = RMB35 (比例 1:1.75)
             let adultRMtoRMB = adultPriceObj.unit === 'RM' ? (adultQty * adultPriceObj.price * 2) : (adultQty * adultPriceObj.price);
             let childRMtoRMB = childPriceObj.unit === 'RM' ? (childQty * childPriceObj.price * 1.75) : (childQty * childPriceObj.price);
             let totalConvertedRMB = adultRMtoRMB + childRMtoRMB;
@@ -721,7 +720,6 @@
             document.getElementById('formTotalCount').innerText = data.totalCount;
             document.getElementById('formTotalPriceRM').innerText = data.totalPriceRM.toFixed(2);
             document.getElementById('formTotalPriceRMB').innerText = data.totalPriceRMB.toFixed(2);
-            document.getElementById('formTotalConvertedRMB').innerText = data.totalConvertedRMB.toFixed(2);
         }
 
         document.querySelectorAll('input, select').forEach(element => {
@@ -830,7 +828,7 @@
         function calculateEditTotal() {
             const adult = parseInt(document.getElementById('editAdultCount').value || 0);
             const child = parseInt(document.getElementById('editChildCount').value || 0);
-            const estimatedRM = (adult * 35) + (child * 20);
+            const estimatedRM = (adult * 30) + (child * 20);
             document.getElementById('editTotalPrice').value = `RM${estimatedRM.toFixed(2)}`;
         }
 
@@ -848,7 +846,7 @@
 
             let numericPrice = parseFloat(priceInput.replace(/[^0-9.]/g, '')) || 0;
             let isRMB = priceInput.toUpperCase().includes('RMB');
-            let converted = isRMB ? numericPrice : (adultCount * 35 * 2 + childCount * 20 * 1.75 || numericPrice * 2);
+            let converted = isRMB ? numericPrice : (adultCount * 30 * 2 + childCount * 20 * 1.75 || numericPrice * 2);
 
             const payload = {
                 adultCount,
@@ -899,10 +897,10 @@
             let converted = r.convertedRMB;
 
             if (converted === undefined) {
-                // 若历史数据缺失换算，执行规范的对应逻辑换算
+                // 若历史数据缺失换算，执行规范的对应逻辑换算（成人RM30=RMB60，儿童RM20=RMB35）
                 let adultQty = r.adultCount || 0;
                 let childQty = r.childCount || 0;
-                converted = (adultQty * 35 * 2) + (childQty * 20 * 1.75);
+                converted = (adultQty * 30 * 2) + (childQty * 20 * 1.75);
                 if (converted === 0) converted = (rm * 2) + rmb;
             }
 
@@ -920,7 +918,6 @@
             let todayGuests = 0;
             let todayRevenueRM = 0;
             let todayRevenueRMB = 0;
-            let todayConvertedRMB = 0;
 
             const todayRecords = allRecords.filter(r => r.date === todayStr);
             todayRecords.forEach(r => {
@@ -928,11 +925,10 @@
                 const amt = getRecordAmounts(r);
                 todayRevenueRM += amt.rm;
                 todayRevenueRMB += amt.rmb;
-                todayConvertedRMB += amt.converted;
             });
 
             document.getElementById('headerTotalGuests').innerText = `${todayGuests} 人`;
-            document.getElementById('headerTotalRevenue').innerText = `RM ${todayRevenueRM.toFixed(2)} / RMB ${todayRevenueRMB.toFixed(2)} (换算: RMB ${todayConvertedRMB.toFixed(2)})`;
+            document.getElementById('headerTotalRevenue').innerText = `RM ${todayRevenueRM.toFixed(2)} / RMB ${todayRevenueRMB.toFixed(2)}`;
 
             if (currentTab === 'today') {
                 renderTodayTable(todayRecords);
