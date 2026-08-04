@@ -7,13 +7,13 @@
     <!-- 引入 Chart.js 用于图表绘制 -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* 复古纸张与木质暖色调主题 */
+        /* 复古纸张与木质暖色调主题 (Vintage / Retro Palette) */
         :root {
             --bg-color: #f4efe6;
             --card-bg: #fcf9f2;
-            --primary-color: #8c2d19;
+            --primary-color: #8c2d19; /* 经典复古红/红棕 */
             --primary-hover: #6e2212;
-            --accent-color: #d99b26;
+            --accent-color: #d99b26; /* 复古黄/金黄 */
             --border-color: #d1c7b7;
             --text-color: #3b3228;
             --text-light: #706354;
@@ -71,33 +71,26 @@
 
         .header-right {
             display: flex;
-            gap: 12px;
+            gap: 20px;
             text-align: right;
-            flex-wrap: wrap;
         }
 
         .stat-box {
             background: #f3ede2;
-            padding: 8px 12px;
+            padding: 8px 15px;
             border-radius: 6px;
             border: 1px solid var(--border-color);
         }
 
         .stat-label {
-            font-size: 0.78rem;
+            font-size: 0.8rem;
             color: var(--text-light);
         }
 
         .stat-value {
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             font-weight: bold;
             color: var(--primary-color);
-        }
-
-        .stat-sub {
-            font-size: 0.75rem;
-            color: #666;
-            margin-top: 2px;
         }
 
         /* 卡片通用样式 */
@@ -124,7 +117,7 @@
         /* 表单布局 */
         .form-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 15px;
             margin-bottom: 15px;
         }
@@ -218,7 +211,10 @@
             transition: background-color 0.2s;
         }
 
-        .btn:hover { background-color: var(--primary-hover); }
+        .btn:hover {
+            background-color: var(--primary-hover);
+        }
+
         .btn-secondary { background-color: #6c757d; }
         .btn-secondary:hover { background-color: #5a6268; }
         .btn-edit { background-color: var(--edit-color); font-weight: normal; padding: 4px 10px; font-size: 0.85rem;}
@@ -227,66 +223,173 @@
         .btn-danger:hover { background-color: #962d22; }
 
         /* 表格样式 */
-        .table-wrapper { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; }
-        th, td { border: 1px solid var(--border-color); padding: 10px; text-align: center; }
-        th { background-color: #eee7da; color: var(--primary-color); font-weight: bold; }
-        tr:nth-child(even) { background-color: #f7f3eb; }
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #eee7da;
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f7f3eb;
+        }
 
         /* 切换标签页 */
-        .nav-tabs { display: flex; gap: 10px; margin-bottom: 15px; }
-        .tab-btn {
-            padding: 8px 18px; background: #e2d9ca; border: 1px solid var(--border-color);
-            border-radius: 5px 5px 0 0; cursor: pointer; font-weight: bold; color: var(--text-color);
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
         }
+
+        .tab-btn {
+            padding: 8px 18px;
+            background: #e2d9ca;
+            border: 1px solid var(--border-color);
+            border-radius: 5px 5px 0 0;
+            cursor: pointer;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+
         .tab-btn.active {
-            background: var(--card-bg); border-bottom: 2px solid var(--card-bg); color: var(--primary-color);
+            background: var(--card-bg);
+            border-bottom: 2px solid var(--card-bg);
+            color: var(--primary-color);
         }
 
         /* 日历样式设计 */
-        .calendar-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+        .calendar-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+        }
+
         .calendar-day-head {
-            text-align: center; font-weight: bold; padding: 8px; background: #eee7da;
-            border-radius: 4px; color: var(--primary-color);
+            text-align: center;
+            font-weight: bold;
+            padding: 8px;
+            background: #eee7da;
+            border-radius: 4px;
+            color: var(--primary-color);
         }
+
         .calendar-day {
-            min-height: 85px; background: #fff; border: 1px solid var(--border-color);
-            border-radius: 6px; padding: 6px; display: flex; flex-direction: column;
-            justify-content: space-between; cursor: pointer; transition: transform 0.1s, box-shadow 0.1s;
+            min-height: 85px;
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 6px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.1s;
         }
-        .calendar-day:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        .calendar-day.empty { background: transparent; border: none; cursor: default; }
-        .calendar-day.today { border: 2px solid var(--accent-color); background-color: #fffdf7; }
-        .calendar-day .day-num { font-weight: bold; font-size: 0.9rem; color: var(--text-color); }
+
+        .calendar-day:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .calendar-day.empty {
+            background: transparent;
+            border: none;
+            cursor: default;
+        }
+
+        .calendar-day.today {
+            border: 2px solid var(--accent-color);
+            background-color: #fffdf7;
+        }
+
+        .calendar-day .day-num {
+            font-weight: bold;
+            font-size: 0.9rem;
+            color: var(--text-color);
+        }
+
         .calendar-day .day-revenue {
-            font-size: 0.75rem; font-weight: bold; color: var(--primary-color);
-            background-color: #fcf6ed; padding: 2px 4px; border-radius: 3px; text-align: right; margin-top: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            background-color: #fcf6ed;
+            padding: 2px 4px;
+            border-radius: 3px;
+            text-align: right;
+            margin-top: 4px;
         }
-        .calendar-day .day-guests { font-size: 0.75rem; color: var(--text-light); text-align: right; }
+
+        .calendar-day .day-guests {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            text-align: right;
+        }
 
         /* 图表布局 */
-        .charts-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-top: 20px; }
-        .chart-box { background: #fff; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); }
-
-        .summary-box {
-            background-color: #fcf6ed; border: 1px solid var(--border-color);
-            border-radius: 6px; padding: 12px 15px; margin-top: 15px; font-size: 0.9rem;
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
         }
 
-        /* 模态框 */
+        .chart-box {
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        /* 模态框 (修改数据用) */
         .modal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000;
-        }
-        .modal-content {
-            background: var(--card-bg); padding: 20px; border-radius: 8px;
-            width: 90%; max-width: 500px; box-shadow: var(--shadow); border: 1px solid var(--border-color);
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
         }
 
+        .modal-content {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        /* 打印样式控制 */
         @media print {
             body { background: white; color: black; padding: 0; }
-            header, .card:first-of-type, .nav-tabs, .btn, .no-print, .charts-container, .calendar-controls { display: none !important; }
+            header, .card:first-of-type, .nav-tabs, .btn, .no-print, .charts-container, .calendar-controls {
+                display: none !important;
+            }
             .card { border: none; box-shadow: none; padding: 0; }
             table { border: 1px solid #000; }
             th, td { border: 1px solid #000; }
@@ -308,8 +411,7 @@
             </div>
             <div class="stat-box">
                 <div class="stat-label">今日总结算收入</div>
-                <div class="stat-value" id="headerTotalRevenue">RM 0.00 / RMB 0.00</div>
-                <div class="stat-sub" id="headerConvertedRevenue">换算: -</div>
+                <div class="stat-value" id="headerTotalRevenue">RM0.00</div>
             </div>
         </div>
     </header>
@@ -319,29 +421,9 @@
         <div class="card-title">🎟️ 门票收款录入</div>
         
         <form id="ticketForm" onsubmit="handleFormSubmit(event)">
-            <!-- 币种选择 -->
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>💱 结算币种：</label>
-                    <select id="currencySelect" onchange="onCurrencyChange()">
-                        <option value="MYR">🇲🇾 吉林特 (RM)</option>
-                        <option value="RMB">🇨🇳 人民币 (RMB)</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>💳 付款方式：</label>
-                    <select id="paymentMethod" required>
-                        <option value="现金">💵 现金</option>
-                        <option value="Touch 'n Go (TnG)">📱 Touch 'n Go</option>
-                        <option value="支付宝">📱 支付宝</option>
-                        <option value="微信支付">📱 微信支付</option>
-                    </select>
-                </div>
-            </div>
-
             <!-- 门票组合多选区域 -->
             <div class="ticket-box">
-                <label style="margin-bottom: 10px; display: block;">设置门票数量与价格：</label>
+                <label style="margin-bottom: 10px; display: block;">设置门票数量与价格（支持同时勾选/填写）：</label>
                 
                 <!-- 成人票 -->
                 <div class="ticket-row">
@@ -364,7 +446,7 @@
                     
                     <span style="margin-left: 10px;">单价：</span>
                     <select id="adultPriceSelect" onchange="toggleCustomPrice('adultPriceSelect', 'adultCustomPrice')">
-                        <option value="35" id="adultDefaultPriceOpt">RM35 (标准)</option>
+                        <option value="35">RM35 (标准)</option>
                         <option value="custom">自定义单价...</option>
                     </select>
                     <input type="number" id="adultCustomPrice" class="custom-input" placeholder="1-999" min="1" max="999" style="width: 100px;">
@@ -391,10 +473,23 @@
                     
                     <span style="margin-left: 10px;">单价：</span>
                     <select id="childPriceSelect" onchange="toggleCustomPrice('childPriceSelect', 'childCustomPrice')">
-                        <option value="20" id="childDefaultPriceOpt">RM20 (标准)</option>
+                        <option value="20">RM20 (标准)</option>
                         <option value="custom">自定义单价...</option>
                     </select>
                     <input type="number" id="childCustomPrice" class="custom-input" placeholder="1-999" min="1" max="999" style="width: 100px;">
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <!-- 付款方式 -->
+                <div class="form-group">
+                    <label>💳 付款方式：</label>
+                    <select id="paymentMethod" required>
+                        <option value="现金">💵 现金</option>
+                        <option value="Touch 'n Go (TnG)">📱 Touch 'n Go</option>
+                        <option value="支付宝">📱 支付宝</option>
+                        <option value="微信支付">📱 微信支付</option>
+                    </select>
                 </div>
             </div>
 
@@ -402,7 +497,7 @@
             <div class="summary-bar">
                 <div>
                     <span>总人数：<b id="formTotalCount">0</b> 人 | </span>
-                    <span class="total-display">应收金额：<span id="formCurrencySymbol">RM</span> <span id="formTotalPrice">0.00</span></span>
+                    <span class="total-display">应收金额：RM <span id="formTotalPrice">0.00</span></span>
                 </div>
                 <button type="submit" class="btn">确认提交</button>
             </div>
@@ -429,7 +524,6 @@
                         <th>日期时间</th>
                         <th>总人数</th>
                         <th>门票价格明细</th>
-                        <th>币种</th>
                         <th>付款方式</th>
                         <th>总价格</th>
                         <th class="no-print">操作</th>
@@ -475,13 +569,9 @@
                     <canvas id="revenueChart"></canvas>
                 </div>
                 <div class="chart-box">
-                    <h4 style="text-align: center; margin-bottom: 10px; color: var(--text-light);">营业时间段客流分布 (订单数)</h4>
-                    <canvas id="timeSlotChart"></canvas>
+                    <h4 style="text-align: center; margin-bottom: 10px; color: var(--text-light);">支付方式占比</h4>
+                    <canvas id="paymentChart"></canvas>
                 </div>
-            </div>
-            <!-- 智能总结 -->
-            <div class="summary-box" id="monthlySummary">
-                ⏳ 正在生成本月数据总结...
             </div>
         </div>
     </div>
@@ -492,13 +582,6 @@
             <h3 style="color: var(--primary-color); margin-bottom: 15px;">✏️ 修改售票记录</h3>
             <form id="editForm" onsubmit="saveEditRecord(event)">
                 <input type="hidden" id="editRecordId">
-                <div class="form-group" style="margin-bottom: 10px;">
-                    <label>币种：</label>
-                    <select id="editCurrency" onchange="calculateEditTotal()">
-                        <option value="MYR">RM (吉林特)</option>
-                        <option value="RMB">RMB (人民币)</option>
-                    </select>
-                </div>
                 <div class="form-group" style="margin-bottom: 10px;">
                     <label>成人票人数：</label>
                     <input type="number" id="editAdultCount" min="0" required onchange="calculateEditTotal()">
@@ -517,7 +600,7 @@
                     </select>
                 </div>
                 <div class="form-group" style="margin-bottom: 15px;">
-                    <label>修改后总价格：</label>
+                    <label>修改后总价格 (RM)：</label>
                     <input type="number" step="0.01" id="editTotalPrice" required>
                 </div>
                 <div style="display: flex; justify-content: flex-end; gap: 10px;">
@@ -531,12 +614,12 @@
     <script>
         let allRecords = [];
         let currentTab = 'today';
-        let calendarDate = new Date();
+        let calendarDate = new Date(); // 日历当前预览的时间
 
         let revenueChartInstance = null;
-        let timeSlotChartInstance = null;
+        let paymentChartInstance = null;
 
-        // 初始化时钟
+        // 初始化时间
         function updateClock() {
             const now = new Date();
             const year = now.getFullYear();
@@ -552,36 +635,7 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        // 切换币种触发逻辑
-        function onCurrencyChange() {
-            const curr = document.getElementById('currencySelect').value;
-            const adultOpt = document.getElementById('adultDefaultPriceOpt');
-            const childOpt = document.getElementById('childDefaultPriceOpt');
-            const symbolSpan = document.getElementById('formCurrencySymbol');
-
-            if (curr === 'RMB') {
-                adultOpt.value = "60";
-                adultOpt.innerText = "RMB 60 (标准)";
-                childOpt.value = "35";
-                childOpt.innerText = "RMB 35 (标准)";
-                symbolSpan.innerText = "RMB";
-            } else {
-                adultOpt.value = "35";
-                adultOpt.innerText = "RM35 (标准)";
-                childOpt.value = "20";
-                childOpt.innerText = "RM20 (标准)";
-                symbolSpan.innerText = "RM";
-            }
-
-            // 重置选中的默认单价
-            document.getElementById('adultPriceSelect').value = adultOpt.value;
-            document.getElementById('childPriceSelect').value = childOpt.value;
-            toggleCustomPrice('adultPriceSelect', 'adultCustomPrice');
-            toggleCustomPrice('childPriceSelect', 'childCustomPrice');
-
-            calculateFormTotal();
-        }
-
+        // 切换自定义输入框显示
         function toggleCustomQty(selectId, inputId) {
             const select = document.getElementById(selectId);
             const input = document.getElementById(inputId);
@@ -608,10 +662,8 @@
             calculateFormTotal();
         }
 
+        // 计算表单实时总价与人数
         function getTicketValues() {
-            const curr = document.getElementById('currencySelect').value;
-            const symbol = curr === 'RMB' ? 'RMB' : 'RM';
-
             let adultQtySelect = document.getElementById('adultQtySelect').value;
             let adultQty = adultQtySelect === 'custom' ? parseInt(document.getElementById('adultCustomQty').value || 0) : parseInt(adultQtySelect);
             let adultPriceSelect = document.getElementById('adultPriceSelect').value;
@@ -626,11 +678,10 @@
             let totalPrice = (adultQty * adultPrice) + (childQty * childPrice);
 
             let detailsArr = [];
-            if (adultQty > 0) detailsArr.push(`成人票 x${adultQty} (${symbol}${adultPrice})`);
-            if (childQty > 0) detailsArr.push(`儿童票 x${childQty} (${symbol}${childPrice})`);
+            if (adultQty > 0) detailsArr.push(`成人票 x${adultQty} (RM${adultPrice})`);
+            if (childQty > 0) detailsArr.push(`儿童票 x${childQty} (RM${childPrice})`);
 
             return {
-                currency: curr,
                 adultQty,
                 childQty,
                 totalCount,
@@ -668,10 +719,9 @@
             const timeStr = now.toTimeString().split(' ')[0];
 
             const payload = {
-                id: Date.now().toString(),
+                id: Date.now().toString(), // 客户端生成唯一ID
                 date: dateStr,
                 time: timeStr,
-                currency: ticketData.currency,
                 adultCount: ticketData.adultQty,
                 childCount: ticketData.childQty,
                 totalCount: ticketData.totalCount,
@@ -693,7 +743,7 @@
                     document.getElementById('adultCustomPrice').style.display = 'none';
                     document.getElementById('childCustomQty').style.display = 'none';
                     document.getElementById('childCustomPrice').style.display = 'none';
-                    onCurrencyChange();
+                    calculateFormTotal();
                     fetchRecords();
                 } else {
                     alert('提交失败，请重试');
@@ -724,7 +774,6 @@
             if (!record) return;
 
             document.getElementById('editRecordId').value = record.id;
-            document.getElementById('editCurrency').value = record.currency || 'MYR';
             document.getElementById('editAdultCount').value = record.adultCount || 0;
             document.getElementById('editChildCount').value = record.childCount || 0;
             document.getElementById('editPaymentMethod').value = record.paymentMethod;
@@ -738,33 +787,26 @@
         }
 
         function calculateEditTotal() {
-            const curr = document.getElementById('editCurrency').value;
             const adult = parseInt(document.getElementById('editAdultCount').value || 0);
             const child = parseInt(document.getElementById('editChildCount').value || 0);
-
-            const adultUnitPrice = curr === 'RMB' ? 60 : 35;
-            const childUnitPrice = curr === 'RMB' ? 35 : 20;
-
-            const estimated = (adult * adultUnitPrice) + (child * childUnitPrice);
+            // 按照默认标准价格预算，用户亦可自行更改
+            const estimated = (adult * 35) + (child * 20);
             document.getElementById('editTotalPrice').value = estimated.toFixed(2);
         }
 
         async function saveEditRecord(e) {
             e.preventDefault();
             const id = document.getElementById('editRecordId').value;
-            const curr = document.getElementById('editCurrency').value;
             const adultCount = parseInt(document.getElementById('editAdultCount').value || 0);
             const childCount = parseInt(document.getElementById('editChildCount').value || 0);
             const totalPrice = parseFloat(document.getElementById('editTotalPrice').value || 0);
             const paymentMethod = document.getElementById('editPaymentMethod').value;
 
-            const symbol = curr === 'RMB' ? 'RMB' : 'RM';
             let detailsArr = [];
             if (adultCount > 0) detailsArr.push(`成人票 x${adultCount}`);
             if (childCount > 0) detailsArr.push(`儿童票 x${childCount}`);
 
             const payload = {
-                currency: curr,
                 adultCount,
                 childCount,
                 totalCount: adultCount + childCount,
@@ -811,35 +853,16 @@
 
             // 计算今日汇总
             let todayGuests = 0;
-            let todayMYR = 0;
-            let todayRMB = 0;
-
-            let rmbAdultsCount = 0;
-            let rmbChildrenCount = 0;
-            let myrAdultsCount = 0;
-            let myrChildrenCount = 0;
+            let todayRevenue = 0;
 
             const todayRecords = allRecords.filter(r => r.date === todayStr);
             todayRecords.forEach(r => {
                 todayGuests += (r.totalCount || 0);
-                if (r.currency === 'RMB') {
-                    todayRMB += (r.totalPrice || 0);
-                    rmbAdultsCount += (r.adultCount || 0);
-                    rmbChildrenCount += (r.childCount || 0);
-                } else {
-                    todayMYR += (r.totalPrice || 0);
-                    myrAdultsCount += (r.adultCount || 0);
-                    myrChildrenCount += (r.childCount || 0);
-                }
+                todayRevenue += (r.totalPrice || 0);
             });
 
-            // 计算等价换算 (严格基于固定单价：成人 RMB 60 = RM 35，儿童 RMB 35 = RM 20)
-            const rmbConvertedToMYR = (rmbAdultsCount * 35) + (rmbChildrenCount * 20);
-            const myrConvertedToRMB = (myrAdultsCount * 60) + (myrChildrenCount * 35);
-
             document.getElementById('headerTotalGuests').innerText = `${todayGuests} 人`;
-            document.getElementById('headerTotalRevenue').innerText = `RM ${todayMYR.toFixed(2)} / RMB ${todayRMB.toFixed(2)}`;
-            document.getElementById('headerConvertedRevenue').innerText = `RMB换算: RM ${rmbConvertedToMYR.toFixed(2)} | RM换算: RMB ${myrConvertedToRMB.toFixed(2)}`;
+            document.getElementById('headerTotalRevenue').innerText = `RM ${todayRevenue.toFixed(2)}`;
 
             if (currentTab === 'today') {
                 renderTodayTable(todayRecords);
@@ -854,20 +877,18 @@
             tbody.innerHTML = '';
 
             if (todayRecords.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" style="color: var(--text-light); padding: 20px;">今日暂无售票记录</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" style="color: var(--text-light); padding: 20px;">今日暂无售票记录</td></tr>`;
                 return;
             }
 
             [...todayRecords].reverse().forEach(r => {
                 const tr = document.createElement('tr');
-                const symbol = r.currency === 'RMB' ? 'RMB' : 'RM';
                 tr.innerHTML = `
                     <td>${r.date} ${r.time}</td>
                     <td><b>${r.totalCount}</b> 人</td>
                     <td>${r.details || '-'}</td>
-                    <td><b>${r.currency || 'MYR'}</b></td>
                     <td>${r.paymentMethod}</td>
-                    <td><b style="color: var(--primary-color);">${symbol} ${Number(r.totalPrice).toFixed(2)}</b></td>
+                    <td><b style="color: var(--primary-color);">RM ${Number(r.totalPrice).toFixed(2)}</b></td>
                     <td class="no-print">
                         <button class="btn btn-edit" onclick="openEditModal('${r.id}')">修改</button>
                         <button class="btn btn-danger" onclick="deleteRecord('${r.id}')">删除</button>
@@ -896,6 +917,7 @@
             const container = document.getElementById('calendarDays');
             container.innerHTML = '';
 
+            // 空白补齐
             for (let i = 0; i < firstDay; i++) {
                 const emptyDiv = document.createElement('div');
                 emptyDiv.className = 'calendar-day empty';
@@ -907,29 +929,20 @@
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 
+                // 筛选当天的记录
                 const dayRecords = allRecords.filter(r => r.date === dateStr);
-                
-                let dayMYR = 0;
-                let dayRMB = 0;
-                dayRecords.forEach(r => {
-                    if (r.currency === 'RMB') dayRMB += (r.totalPrice || 0);
-                    else dayMYR += (r.totalPrice || 0);
-                });
+                const dayRevenue = dayRecords.reduce((sum, r) => sum + (r.totalPrice || 0), 0);
                 const dayGuests = dayRecords.reduce((sum, r) => sum + (r.totalCount || 0), 0);
 
                 const dayDiv = document.createElement('div');
                 dayDiv.className = `calendar-day ${dateStr === todayStr ? 'today' : ''}`;
                 dayDiv.onclick = () => showDayDetails(dateStr, dayRecords);
 
-                let revenueStr = '';
-                if (dayMYR > 0) revenueStr += `RM${dayMYR.toFixed(0)} `;
-                if (dayRMB > 0) revenueStr += `RMB${dayRMB.toFixed(0)}`;
-
                 dayDiv.innerHTML = `
                     <div class="day-num">${day}</div>
                     ${dayRecords.length > 0 ? `
                         <div>
-                            <div class="day-revenue">${revenueStr || '0'}</div>
+                            <div class="day-revenue">RM${dayRevenue.toFixed(0)}</div>
                             <div class="day-guests">${dayGuests}人</div>
                         </div>
                     ` : ''}
@@ -945,19 +958,18 @@
             }
             let details = `📅 ${dateStr} 售票明细：\n\n`;
             records.forEach((r, idx) => {
-                const symbol = r.currency === 'RMB' ? 'RMB' : 'RM';
-                details += `${idx + 1}. [${r.time}] ${r.details} | 付款: ${r.paymentMethod} | 金额: ${symbol}${r.totalPrice}\n`;
+                details += `${idx + 1}. [${r.time}] ${r.details} | 付款: ${r.paymentMethod} | 金额: RM${r.totalPrice}\n`;
             });
             alert(details);
         }
 
-        /* Chart.js 图表渲染与时段分析 */
+        /* Chart.js 图表渲染逻辑 */
         function renderCharts() {
             const year = calendarDate.getFullYear();
             const month = calendarDate.getMonth();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-            // 1. 每日收益图表
+            // 1. 月度每日收益图表数据准备
             const labels = [];
             const revenueData = [];
 
@@ -965,29 +977,22 @@
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
                 labels.push(`${d}日`);
                 
-                // 折算为 RM 统一展示趋势
-                const dayRecords = allRecords.filter(r => r.date === dateStr);
-                let dayTotalMYR = 0;
-                dayRecords.forEach(r => {
-                    if (r.currency === 'RMB') {
-                        const adult = r.adultCount || 0;
-                        const child = r.childCount || 0;
-                        dayTotalMYR += (adult * 35) + (child * 20);
-                    } else {
-                        dayTotalMYR += (r.totalPrice || 0);
-                    }
-                });
-                revenueData.push(dayTotalMYR);
+                const total = allRecords
+                    .filter(r => r.date === dateStr)
+                    .reduce((sum, r) => sum + (r.totalPrice || 0), 0);
+                revenueData.push(total);
             }
 
+            // 销毁旧图表实例
             if (revenueChartInstance) revenueChartInstance.destroy();
+
             const ctx1 = document.getElementById('revenueChart').getContext('2d');
             revenueChartInstance = new Chart(ctx1, {
                 type: 'line',
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: '每日总收益折合 (RM)',
+                        label: '每日总收益 (RM)',
                         data: revenueData,
                         borderColor: '#8c2d19',
                         backgroundColor: 'rgba(140, 45, 25, 0.1)',
@@ -998,97 +1003,33 @@
                 options: { responsive: true, plugins: { legend: { display: false } } }
             });
 
-            // 2. 营业时间段客流分布图表
+            // 2. 支付方式占比图表数据准备
             const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
             const monthRecords = allRecords.filter(r => r.date && r.date.startsWith(monthPrefix));
 
-            // 初始化 24 小时计数
-            const hourlyCounts = Array(24).fill(0);
-            let offBusinessCount = 0;
-
+            const paymentCounts = {};
             monthRecords.forEach(r => {
-                if (r.time) {
-                    const hour = parseInt(r.time.split(':')[0], 10);
-                    if (!isNaN(hour) && hour >= 0 && hour < 24) {
-                        hourlyCounts[hour]++;
-                    }
-
-                    // 营业时间判定：平常日 10:00-18:00，周末 09:30-18:00
-                    const recDate = new Date(r.date);
-                    const dayOfWeek = recDate.getDay(); // 0 是周日，6 是周六
-                    const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-
-                    const timeParts = r.time.split(':');
-                    const timeMinutes = parseInt(timeParts[0], 10) * 60 + parseInt(timeParts[1], 10);
-
-                    const startMinutes = isWeekend ? (9 * 60 + 30) : (10 * 60);
-                    const endMinutes = 18 * 60;
-
-                    if (timeMinutes < startMinutes || timeMinutes > endMinutes) {
-                        offBusinessCount++;
-                    }
-                }
+                const method = r.paymentMethod || '其他';
+                paymentCounts[method] = (paymentCounts[method] || 0) + (r.totalPrice || 0);
             });
 
-            // 生成 8:00 到 19:00 的常用展示时段标签
-            const timeLabels = [];
-            const timeData = [];
-            for (let h = 8; h <= 19; h++) {
-                timeLabels.push(`${String(h).padStart(2, '0')}:00`);
-                timeData.push(hourlyCounts[h]);
-            }
+            if (paymentChartInstance) paymentChartInstance.destroy();
 
-            if (timeSlotChartInstance) timeSlotChartInstance.destroy();
-            const ctx2 = document.getElementById('timeSlotChart').getContext('2d');
-            timeSlotChartInstance = new Chart(ctx2, {
-                type: 'bar',
+            const ctx2 = document.getElementById('paymentChart').getContext('2d');
+            paymentChartInstance = new Chart(ctx2, {
+                type: 'doughnut',
                 data: {
-                    labels: timeLabels,
+                    labels: Object.keys(paymentCounts),
                     datasets: [{
-                        label: '订单笔数',
-                        data: timeData,
-                        backgroundColor: '#d99b26'
+                        data: Object.values(paymentCounts),
+                        backgroundColor: ['#8c2d19', '#d99b26', '#2980b9', '#27ae60', '#8e44ad']
                     }]
                 },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-                }
+                options: { responsive: true }
             });
-
-            // 生成客观智能总结文本
-            generateMonthlySummary(year, month + 1, monthRecords.length, hourlyCounts, offBusinessCount);
         }
 
-        function generateMonthlySummary(year, month, totalOrders, hourlyCounts, offBusinessCount) {
-            const summaryBox = document.getElementById('monthlySummary');
-            if (totalOrders === 0) {
-                summaryBox.innerHTML = `📌 <b>${year}年${month}月总结：</b> 本月暂无售票数据记录。`;
-                return;
-            }
-
-            // 找出最繁忙的时段
-            let peakHour = 8;
-            let maxCount = 0;
-            for (let h = 8; h <= 19; h++) {
-                if (hourlyCounts[h] > maxCount) {
-                    maxCount = hourlyCounts[h];
-                    peakHour = h;
-                }
-            }
-
-            const peakStr = `${String(peakHour).padStart(2, '0')}:00 - ${String(peakHour + 1).padStart(2, '0')}:00`;
-
-            summaryBox.innerHTML = `
-                📌 <b>${year}年${month}月数据总结：</b><br>
-                1. 本月共录得 <b>${totalOrders}</b> 笔门票交易记录。<br>
-                2. 客流最集中的营业时段为 <b>${peakStr}</b>，累计完成 <b>${maxCount}</b> 笔交易。<br>
-                3. 在营业时间之外（平常日10:00前/18:00后，周末09:30前/18:00后）共录得 <b>${offBusinessCount}</b> 笔交易。
-            `;
-        }
-
-        // 标签页切换
+        // 标签切换控制
         function switchTab(tab) {
             currentTab = tab;
             document.getElementById('tabToday').classList.toggle('active', tab === 'today');
@@ -1100,9 +1041,14 @@
             renderUI();
         }
 
-        // 轮询刷数据
+        // 定时轮询与数据刷新
         setInterval(fetchRecords, 5000);
         fetchRecords();
     </script>
 </body>
 </html>
+
+
+
+//门票收款录入，加rmb的选项 rmb60 成人，rmb35小孩，今日总结算收入加rmb就是比如收了2个成年票用的是rm，就要换成rmb并显示，rm的也是同理。这个你明白吗，这个比较复杂。
+//本月数据可视化分析，支付方式占比不要改为当天时间段。我们的营业时间是平常日10-6，周末9.30-6。然后加上总结，比如在哪个时间段人多。
