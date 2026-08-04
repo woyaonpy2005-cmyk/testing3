@@ -297,7 +297,7 @@
         }
 
         .calendar-day {
-            min-height: 85px;
+            min-height: 95px;
             background: #fff;
             border: 1px solid var(--border-color);
             border-radius: 6px;
@@ -332,14 +332,15 @@
         }
 
         .calendar-day .day-revenue {
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             font-weight: bold;
             color: var(--primary-color);
             background-color: #fcf6ed;
             padding: 2px 4px;
             border-radius: 3px;
             text-align: right;
-            margin-top: 4px;
+            margin-top: 2px;
+            line-height: 1.2;
         }
 
         .calendar-day .day-guests {
@@ -410,7 +411,7 @@
                 <div class="stat-value" id="headerTotalGuests">0 人</div>
             </div>
             <div class="stat-box">
-                <div class="stat-label">今日总结算收入</div>
+                <div class="stat-label">今日总结算收入 (折算总计)</div>
                 <div class="stat-value" id="headerTotalRevenue">RM 0.00 / RMB 0.00</div>
             </div>
         </div>
@@ -890,21 +891,33 @@
             }
         }
 
-        // 解析每条记录的币种和换算
+        // 解析每条记录的币种和双向换算（同时得到精确换算后的 RM 与 RMB）
         function getRecordAmounts(r) {
             let rm = r.totalPriceRM !== undefined ? r.totalPriceRM : (r.totalPrice || 0);
             let rmb = r.totalPriceRMB || 0;
-            let converted = r.convertedRMB;
-
-            if (converted === undefined) {
-                // 若历史数据缺失换算，执行规范的对应逻辑换算（成人RM30=RMB60，儿童RM20=RMB35）
+            
+            let convertedRMB = r.convertedRMB;
+            if (convertedRMB === undefined) {
                 let adultQty = r.adultCount || 0;
                 let childQty = r.childCount || 0;
-                converted = (adultQty * 30 * 2) + (childQty * 20 * 1.75);
-                if (converted === 0) converted = (rm * 2) + rmb;
+                convertedRMB = (adultQty * 30 * 2) + (childQty * 20 * 1.75);
+                if (convertedRMB === 0) convertedRMB = (rm * 2) + rmb;
             }
 
-            return { rm, rmb, converted };
+            // 精确换算 RM：成人按照 2 RMB = 1 RM，儿童按照 1.75 RMB = 1 RM 换算
+            let adultQty = r.adultCount || 0;
+            let childQty = r.childCount || 0;
+            let convertedRM = rm;
+            if (rmb > 0) {
+                // 如果有人民币成分，将人民币按对应比例折算为 RM 加进来
+                convertedRM += (adultQty > 0 || childQty > 0) 
+                    ? ((adultQty * 30) + (childQty * 20)) 
+                    : (rmb / 2);
+            } else {
+                convertedRM = rm;
+            }
+
+            return { rm, rmb, convertedRMB, convertedRM };
         }
 
         function renderUI() {
@@ -914,21 +927,21 @@
             const day = String(now.getDate()).padStart(2, '0');
             const todayStr = `${year}-${month}-${day}`;
 
-            // 计算今日汇总
+            // 计算今日汇总（包含换算后的全额 RM 和全额 RMB）
             let todayGuests = 0;
-            let todayRevenueRM = 0;
-            let todayRevenueRMB = 0;
+            let todayTotalRM = 0;
+            let todayTotalRMB = 0;
 
             const todayRecords = allRecords.filter(r => r.date === todayStr);
             todayRecords.forEach(r => {
                 todayGuests += (r.totalCount || 0);
                 const amt = getRecordAmounts(r);
-                todayRevenueRM += amt.rm;
-                todayRevenueRMB += amt.rmb;
+                todayTotalRM += amt.convertedRM;
+                todayTotalRMB += amt.convertedRMB;
             });
 
             document.getElementById('headerTotalGuests').innerText = `${todayGuests} 人`;
-            document.getElementById('headerTotalRevenue').innerText = `RM ${todayRevenueRM.toFixed(2)} / RMB ${todayRevenueRMB.toFixed(2)}`;
+            document.getElementById('headerTotalRevenue').innerText = `RM ${todayTotalRM.toFixed(2)} / RMB ${todayTotalRMB.toFixed(2)}`;
 
             if (currentTab === 'today') {
                 renderTodayTable(todayRecords);
@@ -1000,28 +1013,27 @@
                 
                 // 筛选当天的记录
                 const dayRecords = allRecords.filter(r => r.date === dateStr);
-                let dayRM = 0;
-                let dayRMB = 0;
-                let dayConverted = 0;
+                let dayTotalRM = 0;
+                let dayTotalRMB = 0;
                 let dayGuests = 0;
 
                 dayRecords.forEach(r => {
                     const amt = getRecordAmounts(r);
-                    dayRM += amt.rm;
-                    dayRMB += amt.rmb;
-                    dayConverted += amt.converted;
+                    dayTotalRM += amt.convertedRM;
+                    dayTotalRMB += amt.convertedRMB;
                     dayGuests += (r.totalCount || 0);
                 });
 
                 const dayDiv = document.createElement('div');
                 dayDiv.className = `calendar-day ${dateStr === todayStr ? 'today' : ''}`;
-                dayDiv.onclick = () => showDayDetails(dateStr, dayRecords);
+                dayDiv.onclick = () => showDayDetails(dateStr, dayRecords, dayTotalRM, dayTotalRMB);
 
                 dayDiv.innerHTML = `
                     <div class="day-num">${day}</div>
                     ${dayRecords.length > 0 ? `
                         <div>
-                            <div class="day-revenue">RMB${dayConverted.toFixed(0)}</div>
+                            <div class="day-revenue">RM ${dayTotalRM.toFixed(0)}</div>
+                            <div class="day-revenue">RMB ${dayTotalRMB.toFixed(0)}</div>
                             <div class="day-guests">${dayGuests}人</div>
                         </div>
                     ` : ''}
@@ -1030,12 +1042,13 @@
             }
         }
 
-        function showDayDetails(dateStr, records) {
+        function showDayDetails(dateStr, records, totalRM, totalRMB) {
             if (records.length === 0) {
                 alert(`${dateStr} 没有售票记录。`);
                 return;
             }
-            let details = `📅 ${dateStr} 售票明细：\n\n`;
+            let details = `📅 ${dateStr} 售票明细：\n`;
+            details += `💰 折算总收益：RM ${totalRM.toFixed(2)} / RMB ${totalRMB.toFixed(2)}\n-----------------------------\n`;
             records.forEach((r, idx) => {
                 const amt = getRecordAmounts(r);
                 let pStr = r.displayPrice || `RM${amt.rm}`;
@@ -1060,7 +1073,7 @@
                 
                 const dayTotalConverted = allRecords
                     .filter(r => r.date === dateStr)
-                    .reduce((sum, r) => sum + getRecordAmounts(r).converted, 0);
+                    .reduce((sum, r) => sum + getRecordAmounts(r).convertedRMB, 0);
                 revenueData.push(dayTotalConverted);
             }
 
@@ -1094,7 +1107,7 @@
                 if (r.time) {
                     const hour = parseInt(r.time.split(':')[0], 10);
                     if (!isNaN(hour) && hour >= 0 && hour < 24) {
-                        hourlyRevenue[hour] += getRecordAmounts(r).converted;
+                        hourlyRevenue[hour] += getRecordAmounts(r).convertedRMB;
                     }
                 }
             });
