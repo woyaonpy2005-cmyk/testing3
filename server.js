@@ -18,17 +18,22 @@ mongoose.connect(MONGO_URI)
     .then(() => console.log('✅ 成功连接至 MongoDB Atlas 云数据库'))
     .catch(err => console.error('❌ MongoDB 连接失败:', err));
 
-// 2. 数据结构定义 (支持 MYR/RMB 多币种及详细记录)
+// 2. 数据结构定义 (更新支持 RM/RMB 及换算字段)
 const recordSchema = new mongoose.Schema({
     id: { type: String, required: true, unique: true },
     date: { type: String, required: true },
     time: { type: String, required: true },
-    currency: { type: String, default: 'MYR' },        // 新增：币种 MYR 或 RMB
+    currency: { type: String, default: 'MYR' },
     adultCount: { type: Number, default: 0 },
     childCount: { type: Number, default: 0 },
     totalCount: { type: Number, default: 0 },
     paymentMethod: { type: String, required: true },
-    totalPrice: { type: Number, required: true },
+    totalPrice: { type: Number, default: 0 },
+    // 新增字段匹配前端提交的数据
+    totalPriceRM: { type: Number, default: 0 },
+    totalPriceRMB: { type: Number, default: 0 },
+    convertedRMB: { type: Number, default: 0 },
+    displayPrice: { type: String, default: '' },
     details: { type: String }
 }, { timestamps: true });
 
@@ -42,6 +47,7 @@ app.get('/api/records', async (req, res) => {
         const records = await Record.find().sort({ createdAt: 1 });
         res.json(records);
     } catch (err) {
+        console.error("GET 错误:", err);
         res.status(500).json({ error: '获取数据失败' });
     }
 });
@@ -53,7 +59,8 @@ app.post('/api/records', async (req, res) => {
         await newRecord.save();
         res.json({ success: true, record: newRecord });
     } catch (err) {
-        res.status(500).json({ error: '数据保存失败' });
+        console.error("POST 提交失败，具体原因:", err); // 在终端打印精准错误
+        res.status(500).json({ error: '数据保存失败', details: err.message });
     }
 });
 
@@ -65,6 +72,7 @@ app.put('/api/records/:id', async (req, res) => {
         if (!updatedRecord) return res.status(404).json({ error: '未找到该记录' });
         res.json({ success: true, record: updatedRecord });
     } catch (err) {
+        console.error("PUT 错误:", err);
         res.status(500).json({ error: '更新失败' });
     }
 });
@@ -77,6 +85,7 @@ app.delete('/api/records/:id', async (req, res) => {
         if (!deletedRecord) return res.status(404).json({ error: '未找到要删除的记录' });
         res.json({ success: true });
     } catch (err) {
+        console.error("DELETE 错误:", err);
         res.status(500).json({ error: '删除失败' });
     }
 });
