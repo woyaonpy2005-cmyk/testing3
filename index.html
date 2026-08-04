@@ -411,7 +411,7 @@
                 <div class="stat-value" id="headerTotalGuests">0 人</div>
             </div>
             <div class="stat-box">
-                <div class="stat-label">今日总结算收入 (折算总计)</div>
+                <div class="stat-label">今日总结算收入</div>
                 <div class="stat-value" id="headerTotalRevenue">RM 0.00 / RMB 0.00</div>
             </div>
         </div>
@@ -447,8 +447,8 @@
                     
                     <span style="margin-left: 10px;">单价：</span>
                     <select id="adultPriceSelect" onchange="toggleCustomPrice('adultPriceSelect', 'adultCustomPrice')">
-                        <option value="RM30">RM30 (标准)</option>
-                        <option value="RMB60">RMB60</option>
+                        <option value="RM35">RM35 / RMB60</option>
+                        <option value="RMB60">RMB60 / RM35</option>
                         <option value="custom">自定义单价...</option>
                     </select>
                     <input type="number" id="adultCustomPrice" class="custom-input" placeholder="1-999" min="1" max="999" style="width: 100px;">
@@ -475,8 +475,8 @@
                     
                     <span style="margin-left: 10px;">单价：</span>
                     <select id="childPriceSelect" onchange="toggleCustomPrice('childPriceSelect', 'childCustomPrice')">
-                        <option value="RM20">RM20 (标准)</option>
-                        <option value="RMB35">RMB35</option>
+                        <option value="RM20">RM20 / RMB35</option>
+                        <option value="RMB35">RMB35 / RM20</option>
                         <option value="custom">自定义单价...</option>
                     </select>
                     <input type="number" id="childCustomPrice" class="custom-input" placeholder="1-999" min="1" max="999" style="width: 100px;">
@@ -604,7 +604,7 @@
                 </div>
                 <div class="form-group" style="margin-bottom: 15px;">
                     <label>修改后总价格：</label>
-                    <input type="text" id="editTotalPrice" required placeholder="如: RM30 / RMB60">
+                    <input type="text" id="editTotalPrice" required placeholder="如: RM35 / RMB60">
                 </div>
                 <div style="display: flex; justify-content: flex-end; gap: 10px;">
                     <button type="button" class="btn btn-secondary" onclick="closeEditModal()">取消</button>
@@ -665,45 +665,23 @@
             calculateFormTotal();
         }
 
-        // 计算表单实时总价与人数（含RM/RMB区分与汇率换算逻辑）
-        function parsePrice(selectValue, customValue) {
-            if (selectValue === 'custom') {
-                return { unit: 'RM', price: parseFloat(customValue || 0) };
-            }
-            if (selectValue.startsWith('RMB')) {
-                return { unit: 'RMB', price: parseFloat(selectValue.replace('RMB', '')) };
-            }
-            return { unit: 'RM', price: parseFloat(selectValue.replace('RM', '')) };
-        }
-
+        // 计算表单实时总价与人数（固定匹配：成人票 RM35=RMB60，儿童票 RM20=RMB35）
         function getTicketValues() {
             let adultQtySelect = document.getElementById('adultQtySelect').value;
             let adultQty = adultQtySelect === 'custom' ? parseInt(document.getElementById('adultCustomQty').value || 0) : parseInt(adultQtySelect);
-            let adultPriceObj = parsePrice(document.getElementById('adultPriceSelect').value, document.getElementById('adultCustomPrice').value);
 
             let childQtySelect = document.getElementById('childQtySelect').value;
             let childQty = childQtySelect === 'custom' ? parseInt(document.getElementById('childCustomQty').value || 0) : parseInt(childQtySelect);
-            let childPriceObj = parsePrice(document.getElementById('childPriceSelect').value, document.getElementById('childCustomPrice').value);
 
             let totalCount = adultQty + childQty;
 
-            let totalPriceRM = 0;
-            let totalPriceRMB = 0;
-
-            if (adultPriceObj.unit === 'RM') totalPriceRM += adultQty * adultPriceObj.price;
-            else totalPriceRMB += adultQty * adultPriceObj.price;
-
-            if (childPriceObj.unit === 'RM') totalPriceRM += childQty * childPriceObj.price;
-            else totalPriceRMB += childQty * childPriceObj.price;
-
-            // 固定换算逻辑：RM30 = RMB60 (比例 1:2)；RM20 = RMB35 (比例 1:1.75)
-            let adultRMtoRMB = adultPriceObj.unit === 'RM' ? (adultQty * adultPriceObj.price * 2) : (adultQty * adultPriceObj.price);
-            let childRMtoRMB = childPriceObj.unit === 'RM' ? (childQty * childPriceObj.price * 1.75) : (childQty * childPriceObj.price);
-            let totalConvertedRMB = adultRMtoRMB + childRMtoRMB;
+            // 完全固定计算逻辑：不搞比例换算，张数直接乘固定单价
+            let totalPriceRM = (adultQty * 35) + (childQty * 20);
+            let totalPriceRMB = (adultQty * 60) + (childQty * 35);
 
             let detailsArr = [];
-            if (adultQty > 0) detailsArr.push(`成人票 x${adultQty} (${adultPriceObj.unit}${adultPriceObj.price})`);
-            if (childQty > 0) detailsArr.push(`儿童票 x${childQty} (${childPriceObj.unit}${childPriceObj.price})`);
+            if (adultQty > 0) detailsArr.push(`成人票 x${adultQty}`);
+            if (childQty > 0) detailsArr.push(`儿童票 x${childQty}`);
 
             return {
                 adultQty,
@@ -711,7 +689,6 @@
                 totalCount,
                 totalPriceRM,
                 totalPriceRMB,
-                totalConvertedRMB,
                 details: detailsArr.join(', ') || '无门票'
             };
         }
@@ -745,14 +722,7 @@
             const dateStr = `${year}-${month}-${day}`;
             const timeStr = now.toTimeString().split(' ')[0];
 
-            let displayPriceStr = "";
-            if (ticketData.totalPriceRM > 0 && ticketData.totalPriceRMB > 0) {
-                displayPriceStr = `RM${ticketData.totalPriceRM.toFixed(2)} + RMB${ticketData.totalPriceRMB.toFixed(2)}`;
-            } else if (ticketData.totalPriceRMB > 0) {
-                displayPriceStr = `RMB${ticketData.totalPriceRMB.toFixed(2)}`;
-            } else {
-                displayPriceStr = `RM${ticketData.totalPriceRM.toFixed(2)}`;
-            }
+            let displayPriceStr = `RM${ticketData.totalPriceRM} / RMB${ticketData.totalPriceRMB}`;
 
             const payload = {
                 id: Date.now().toString(),
@@ -762,10 +732,10 @@
                 childCount: ticketData.childQty,
                 totalCount: ticketData.totalCount,
                 paymentMethod: document.getElementById('paymentMethod').value,
-                totalPrice: ticketData.totalPriceRM, // 兼容原字段
+                totalPrice: ticketData.totalPriceRM,
                 totalPriceRM: ticketData.totalPriceRM,
                 totalPriceRMB: ticketData.totalPriceRMB,
-                convertedRMB: ticketData.totalConvertedRMB,
+                convertedRMB: ticketData.totalPriceRMB,
                 displayPrice: displayPriceStr,
                 details: ticketData.details
             };
@@ -829,8 +799,9 @@
         function calculateEditTotal() {
             const adult = parseInt(document.getElementById('editAdultCount').value || 0);
             const child = parseInt(document.getElementById('editChildCount').value || 0);
-            const estimatedRM = (adult * 30) + (child * 20);
-            document.getElementById('editTotalPrice').value = `RM${estimatedRM.toFixed(2)}`;
+            const estimatedRM = (adult * 35) + (child * 20);
+            const estimatedRMB = (adult * 60) + (child * 35);
+            document.getElementById('editTotalPrice').value = `RM${estimatedRM} / RMB${estimatedRMB}`;
         }
 
         async function saveEditRecord(e) {
@@ -845,18 +816,17 @@
             if (adultCount > 0) detailsArr.push(`成人票 x${adultCount}`);
             if (childCount > 0) detailsArr.push(`儿童票 x${childCount}`);
 
-            let numericPrice = parseFloat(priceInput.replace(/[^0-9.]/g, '')) || 0;
-            let isRMB = priceInput.toUpperCase().includes('RMB');
-            let converted = isRMB ? numericPrice : (adultCount * 30 * 2 + childCount * 20 * 1.75 || numericPrice * 2);
+            let calcRM = (adultCount * 35) + (childCount * 20);
+            let calcRMB = (adultCount * 60) + (childCount * 35);
 
             const payload = {
                 adultCount,
                 childCount,
                 totalCount: adultCount + childCount,
-                totalPrice: isRMB ? 0 : numericPrice,
-                totalPriceRM: isRMB ? 0 : numericPrice,
-                totalPriceRMB: isRMB ? numericPrice : 0,
-                convertedRMB: converted,
+                totalPrice: calcRM,
+                totalPriceRM: calcRM,
+                totalPriceRMB: calcRMB,
+                convertedRMB: calcRMB,
                 displayPrice: priceInput,
                 paymentMethod,
                 details: detailsArr.join(', ') || '门票修改'
@@ -891,33 +861,21 @@
             }
         }
 
-        // 解析每条记录的币种和双向换算（同时得到精确换算后的 RM 与 RMB）
+        // 解析每条记录对应的固定 RM 和 RMB
         function getRecordAmounts(r) {
-            let rm = r.totalPriceRM !== undefined ? r.totalPriceRM : (r.totalPrice || 0);
-            let rmb = r.totalPriceRMB || 0;
-            
-            let convertedRMB = r.convertedRMB;
-            if (convertedRMB === undefined) {
-                let adultQty = r.adultCount || 0;
-                let childQty = r.childCount || 0;
-                convertedRMB = (adultQty * 30 * 2) + (childQty * 20 * 1.75);
-                if (convertedRMB === 0) convertedRMB = (rm * 2) + rmb;
-            }
-
-            // 精确换算 RM：成人按照 2 RMB = 1 RM，儿童按照 1.75 RMB = 1 RM 换算
             let adultQty = r.adultCount || 0;
             let childQty = r.childCount || 0;
-            let convertedRM = rm;
-            if (rmb > 0) {
-                // 如果有人民币成分，将人民币按对应比例折算为 RM 加进来
-                convertedRM += (adultQty > 0 || childQty > 0) 
-                    ? ((adultQty * 30) + (childQty * 20)) 
-                    : (rmb / 2);
-            } else {
-                convertedRM = rm;
+
+            let totalRM = (adultQty * 35) + (childQty * 20);
+            let totalRMB = (adultQty * 60) + (childQty * 35);
+
+            // 如果旧数据没有保存人数，回退到原字段
+            if (totalRM === 0 && (r.totalPriceRM || r.totalPrice)) {
+                totalRM = r.totalPriceRM || r.totalPrice || 0;
+                totalRMB = r.totalPriceRMB || r.convertedRMB || 0;
             }
 
-            return { rm, rmb, convertedRMB, convertedRM };
+            return { totalRM, totalRMB };
         }
 
         function renderUI() {
@@ -927,7 +885,7 @@
             const day = String(now.getDate()).padStart(2, '0');
             const todayStr = `${year}-${month}-${day}`;
 
-            // 计算今日汇总（包含换算后的全额 RM 和全额 RMB）
+            // 计算今日汇总
             let todayGuests = 0;
             let todayTotalRM = 0;
             let todayTotalRMB = 0;
@@ -936,8 +894,8 @@
             todayRecords.forEach(r => {
                 todayGuests += (r.totalCount || 0);
                 const amt = getRecordAmounts(r);
-                todayTotalRM += amt.convertedRM;
-                todayTotalRMB += amt.convertedRMB;
+                todayTotalRM += amt.totalRM;
+                todayTotalRMB += amt.totalRMB;
             });
 
             document.getElementById('headerTotalGuests').innerText = `${todayGuests} 人`;
@@ -963,7 +921,7 @@
             [...todayRecords].reverse().forEach(r => {
                 const tr = document.createElement('tr');
                 const amt = getRecordAmounts(r);
-                let priceText = r.displayPrice || `RM ${amt.rm.toFixed(2)}`;
+                let priceText = r.displayPrice || `RM${amt.totalRM} / RMB${amt.totalRMB}`;
                 
                 tr.innerHTML = `
                     <td>${r.date} ${r.time}</td>
@@ -1019,8 +977,8 @@
 
                 dayRecords.forEach(r => {
                     const amt = getRecordAmounts(r);
-                    dayTotalRM += amt.convertedRM;
-                    dayTotalRMB += amt.convertedRMB;
+                    dayTotalRM += amt.totalRM;
+                    dayTotalRMB += amt.totalRMB;
                     dayGuests += (r.totalCount || 0);
                 });
 
@@ -1048,10 +1006,10 @@
                 return;
             }
             let details = `📅 ${dateStr} 售票明细：\n`;
-            details += `💰 折算总收益：RM ${totalRM.toFixed(2)} / RMB ${totalRMB.toFixed(2)}\n-----------------------------\n`;
+            details += `💰 当日总收益：RM ${totalRM.toFixed(2)} / RMB ${totalRMB.toFixed(2)}\n-----------------------------\n`;
             records.forEach((r, idx) => {
                 const amt = getRecordAmounts(r);
-                let pStr = r.displayPrice || `RM${amt.rm}`;
+                let pStr = r.displayPrice || `RM${amt.totalRM} / RMB${amt.totalRMB}`;
                 details += `${idx + 1}. [${r.time}] ${r.details} | 付款: ${r.paymentMethod} | 金额: ${pStr}\n`;
             });
             alert(details);
@@ -1073,7 +1031,7 @@
                 
                 const dayTotalConverted = allRecords
                     .filter(r => r.date === dateStr)
-                    .reduce((sum, r) => sum + getRecordAmounts(r).convertedRMB, 0);
+                    .reduce((sum, r) => sum + getRecordAmounts(r).totalRMB, 0);
                 revenueData.push(dayTotalConverted);
             }
 
@@ -1086,7 +1044,7 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: '每日收益 (RMB 换算总计)',
+                        label: '每日收益 (RMB 总计)',
                         data: revenueData,
                         borderColor: '#8c2d19',
                         backgroundColor: 'rgba(140, 45, 25, 0.1)',
@@ -1107,7 +1065,7 @@
                 if (r.time) {
                     const hour = parseInt(r.time.split(':')[0], 10);
                     if (!isNaN(hour) && hour >= 0 && hour < 24) {
-                        hourlyRevenue[hour] += getRecordAmounts(r).convertedRMB;
+                        hourlyRevenue[hour] += getRecordAmounts(r).totalRMB;
                     }
                 }
             });
