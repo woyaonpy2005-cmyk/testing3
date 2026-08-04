@@ -88,7 +88,7 @@
         }
 
         .stat-value {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: bold;
             color: var(--primary-color);
         }
@@ -194,7 +194,7 @@
         }
 
         .total-display {
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             font-weight: bold;
             color: var(--primary-color);
         }
@@ -332,7 +332,7 @@
         }
 
         .calendar-day .day-revenue {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: bold;
             color: var(--primary-color);
             background-color: #fcf6ed;
@@ -411,7 +411,7 @@
             </div>
             <div class="stat-box">
                 <div class="stat-label">今日总结算收入</div>
-                <div class="stat-value" id="headerTotalRevenue">RM0.00</div>
+                <div class="stat-value" id="headerTotalRevenue">RM0.00 / RMB0.00</div>
             </div>
         </div>
     </header>
@@ -446,7 +446,8 @@
                     
                     <span style="margin-left: 10px;">单价：</span>
                     <select id="adultPriceSelect" onchange="toggleCustomPrice('adultPriceSelect', 'adultCustomPrice')">
-                        <option value="35">RM35 (标准)</option>
+                        <option value="RM35">RM35 (标准)</option>
+                        <option value="RMB60">RMB60</option>
                         <option value="custom">自定义单价...</option>
                     </select>
                     <input type="number" id="adultCustomPrice" class="custom-input" placeholder="1-999" min="1" max="999" style="width: 100px;">
@@ -473,7 +474,8 @@
                     
                     <span style="margin-left: 10px;">单价：</span>
                     <select id="childPriceSelect" onchange="toggleCustomPrice('childPriceSelect', 'childCustomPrice')">
-                        <option value="20">RM20 (标准)</option>
+                        <option value="RM20">RM20 (标准)</option>
+                        <option value="RMB35">RMB35</option>
                         <option value="custom">自定义单价...</option>
                     </select>
                     <input type="number" id="childCustomPrice" class="custom-input" placeholder="1-999" min="1" max="999" style="width: 100px;">
@@ -497,7 +499,7 @@
             <div class="summary-bar">
                 <div>
                     <span>总人数：<b id="formTotalCount">0</b> 人 | </span>
-                    <span class="total-display">应收金额：RM <span id="formTotalPrice">0.00</span></span>
+                    <span class="total-display">应收金额：RM <span id="formTotalPriceRM">0.00</span> / RMB <span id="formTotalPriceRMB">0.00</span> (换算总计: RMB <span id="formTotalConvertedRMB">0.00</span>)</span>
                 </div>
                 <button type="submit" class="btn">确认提交</button>
             </div>
@@ -565,12 +567,12 @@
             <div class="card-title">📊 本月数据可视化分析</div>
             <div class="charts-container">
                 <div class="chart-box">
-                    <h4 style="text-align: center; margin-bottom: 10px; color: var(--text-light);">每日营收趋势 (RM)</h4>
+                    <h4 style="text-align: center; margin-bottom: 10px; color: var(--text-light);">每日营收趋势 (RMB 换算总计)</h4>
                     <canvas id="revenueChart"></canvas>
                 </div>
                 <div class="chart-box">
-                    <h4 style="text-align: center; margin-bottom: 10px; color: var(--text-light);">支付方式占比</h4>
-                    <canvas id="paymentChart"></canvas>
+                    <h4 style="text-align: center; margin-bottom: 10px; color: var(--text-light);">当天时间段分布图 (24小时分布)</h4>
+                    <canvas id="timeChart"></canvas>
                 </div>
             </div>
         </div>
@@ -600,8 +602,8 @@
                     </select>
                 </div>
                 <div class="form-group" style="margin-bottom: 15px;">
-                    <label>修改后总价格 (RM)：</label>
-                    <input type="number" step="0.01" id="editTotalPrice" required>
+                    <label>修改后总价格：</label>
+                    <input type="text" id="editTotalPrice" required placeholder="如: RM35 / RMB60">
                 </div>
                 <div style="display: flex; justify-content: flex-end; gap: 10px;">
                     <button type="button" class="btn btn-secondary" onclick="closeEditModal()">取消</button>
@@ -617,7 +619,7 @@
         let calendarDate = new Date(); // 日历当前预览的时间
 
         let revenueChartInstance = null;
-        let paymentChartInstance = null;
+        let timeChartInstance = null;
 
         // 初始化时间
         function updateClock() {
@@ -662,30 +664,54 @@
             calculateFormTotal();
         }
 
-        // 计算表单实时总价与人数
+        // 计算表单实时总价与人数（含RM/RMB区分与汇率换算逻辑）
+        function parsePrice(selectValue, customValue) {
+            if (selectValue === 'custom') {
+                return { unit: 'RM', price: parseFloat(customValue || 0) };
+            }
+            if (selectValue.startsWith('RMB')) {
+                return { unit: 'RMB', price: parseFloat(selectValue.replace('RMB', '')) };
+            }
+            return { unit: 'RM', price: parseFloat(selectValue.replace('RM', '')) };
+        }
+
         function getTicketValues() {
             let adultQtySelect = document.getElementById('adultQtySelect').value;
             let adultQty = adultQtySelect === 'custom' ? parseInt(document.getElementById('adultCustomQty').value || 0) : parseInt(adultQtySelect);
-            let adultPriceSelect = document.getElementById('adultPriceSelect').value;
-            let adultPrice = adultPriceSelect === 'custom' ? parseFloat(document.getElementById('adultCustomPrice').value || 0) : parseFloat(adultPriceSelect);
+            let adultPriceObj = parsePrice(document.getElementById('adultPriceSelect').value, document.getElementById('adultCustomPrice').value);
 
             let childQtySelect = document.getElementById('childQtySelect').value;
             let childQty = childQtySelect === 'custom' ? parseInt(document.getElementById('childCustomQty').value || 0) : parseInt(childQtySelect);
-            let childPriceSelect = document.getElementById('childPriceSelect').value;
-            let childPrice = childPriceSelect === 'custom' ? parseFloat(document.getElementById('childCustomPrice').value || 0) : parseFloat(childPriceSelect);
+            let childPriceObj = parsePrice(document.getElementById('childPriceSelect').value, document.getElementById('childCustomPrice').value);
 
             let totalCount = adultQty + childQty;
-            let totalPrice = (adultQty * adultPrice) + (childQty * childPrice);
+
+            let totalPriceRM = 0;
+            let totalPriceRMB = 0;
+
+            if (adultPriceObj.unit === 'RM') totalPriceRM += adultQty * adultPriceObj.price;
+            else totalPriceRMB += adultQty * adultPriceObj.price;
+
+            if (childPriceObj.unit === 'RM') totalPriceRM += childQty * childPriceObj.price;
+            else totalPriceRMB += childQty * childPriceObj.price;
+
+            // 规定的换算逻辑：RM30 = RMB60 (比例 1:2)；RM20 = RMB35 (比例 1:1.75)
+            // 默认换算比例统一计算为：成人RM相当于2倍RMB，儿童RM相当于1.75倍RMB
+            let adultRMtoRMB = adultPriceObj.unit === 'RM' ? (adultQty * adultPriceObj.price * 2) : (adultQty * adultPriceObj.price);
+            let childRMtoRMB = childPriceObj.unit === 'RM' ? (childQty * childPriceObj.price * 1.75) : (childQty * childPriceObj.price);
+            let totalConvertedRMB = adultRMtoRMB + childRMtoRMB;
 
             let detailsArr = [];
-            if (adultQty > 0) detailsArr.push(`成人票 x${adultQty} (RM${adultPrice})`);
-            if (childQty > 0) detailsArr.push(`儿童票 x${childQty} (RM${childPrice})`);
+            if (adultQty > 0) detailsArr.push(`成人票 x${adultQty} (${adultPriceObj.unit}${adultPriceObj.price})`);
+            if (childQty > 0) detailsArr.push(`儿童票 x${childQty} (${childPriceObj.unit}${childPriceObj.price})`);
 
             return {
                 adultQty,
                 childQty,
                 totalCount,
-                totalPrice,
+                totalPriceRM,
+                totalPriceRMB,
+                totalConvertedRMB,
                 details: detailsArr.join(', ') || '无门票'
             };
         }
@@ -693,7 +719,9 @@
         function calculateFormTotal() {
             const data = getTicketValues();
             document.getElementById('formTotalCount').innerText = data.totalCount;
-            document.getElementById('formTotalPrice').innerText = data.totalPrice.toFixed(2);
+            document.getElementById('formTotalPriceRM').innerText = data.totalPriceRM.toFixed(2);
+            document.getElementById('formTotalPriceRMB').innerText = data.totalPriceRMB.toFixed(2);
+            document.getElementById('formTotalConvertedRMB').innerText = data.totalConvertedRMB.toFixed(2);
         }
 
         document.querySelectorAll('input, select').forEach(element => {
@@ -718,15 +746,28 @@
             const dateStr = `${year}-${month}-${day}`;
             const timeStr = now.toTimeString().split(' ')[0];
 
+            let displayPriceStr = "";
+            if (ticketData.totalPriceRM > 0 && ticketData.totalPriceRMB > 0) {
+                displayPriceStr = `RM${ticketData.totalPriceRM.toFixed(2)} + RMB${ticketData.totalPriceRMB.toFixed(2)}`;
+            } else if (ticketData.totalPriceRMB > 0) {
+                displayPriceStr = `RMB${ticketData.totalPriceRMB.toFixed(2)}`;
+            } else {
+                displayPriceStr = `RM${ticketData.totalPriceRM.toFixed(2)}`;
+            }
+
             const payload = {
-                id: Date.now().toString(), // 客户端生成唯一ID
+                id: Date.now().toString(),
                 date: dateStr,
                 time: timeStr,
                 adultCount: ticketData.adultQty,
                 childCount: ticketData.childQty,
                 totalCount: ticketData.totalCount,
                 paymentMethod: document.getElementById('paymentMethod').value,
-                totalPrice: ticketData.totalPrice,
+                totalPrice: ticketData.totalPriceRM, // 兼容原字段
+                totalPriceRM: ticketData.totalPriceRM,
+                totalPriceRMB: ticketData.totalPriceRMB,
+                convertedRMB: ticketData.totalConvertedRMB,
+                displayPrice: displayPriceStr,
                 details: ticketData.details
             };
 
@@ -777,7 +818,7 @@
             document.getElementById('editAdultCount').value = record.adultCount || 0;
             document.getElementById('editChildCount').value = record.childCount || 0;
             document.getElementById('editPaymentMethod').value = record.paymentMethod;
-            document.getElementById('editTotalPrice').value = record.totalPrice;
+            document.getElementById('editTotalPrice').value = record.displayPrice || `RM${record.totalPrice}`;
 
             document.getElementById('editModal').style.display = 'flex';
         }
@@ -789,9 +830,8 @@
         function calculateEditTotal() {
             const adult = parseInt(document.getElementById('editAdultCount').value || 0);
             const child = parseInt(document.getElementById('editChildCount').value || 0);
-            // 按照默认标准价格预算，用户亦可自行更改
-            const estimated = (adult * 35) + (child * 20);
-            document.getElementById('editTotalPrice').value = estimated.toFixed(2);
+            const estimatedRM = (adult * 35) + (child * 20);
+            document.getElementById('editTotalPrice').value = `RM${estimatedRM.toFixed(2)}`;
         }
 
         async function saveEditRecord(e) {
@@ -799,18 +839,26 @@
             const id = document.getElementById('editRecordId').value;
             const adultCount = parseInt(document.getElementById('editAdultCount').value || 0);
             const childCount = parseInt(document.getElementById('editChildCount').value || 0);
-            const totalPrice = parseFloat(document.getElementById('editTotalPrice').value || 0);
+            const priceInput = document.getElementById('editTotalPrice').value;
             const paymentMethod = document.getElementById('editPaymentMethod').value;
 
             let detailsArr = [];
             if (adultCount > 0) detailsArr.push(`成人票 x${adultCount}`);
             if (childCount > 0) detailsArr.push(`儿童票 x${childCount}`);
 
+            let numericPrice = parseFloat(priceInput.replace(/[^0-9.]/g, '')) || 0;
+            let isRMB = priceInput.toUpperCase().includes('RMB');
+            let converted = isRMB ? numericPrice : (adultCount * 35 * 2 + childCount * 20 * 1.75 || numericPrice * 2);
+
             const payload = {
                 adultCount,
                 childCount,
                 totalCount: adultCount + childCount,
-                totalPrice,
+                totalPrice: isRMB ? 0 : numericPrice,
+                totalPriceRM: isRMB ? 0 : numericPrice,
+                totalPriceRMB: isRMB ? numericPrice : 0,
+                convertedRMB: converted,
+                displayPrice: priceInput,
                 paymentMethod,
                 details: detailsArr.join(', ') || '门票修改'
             };
@@ -844,6 +892,23 @@
             }
         }
 
+        // 解析每条记录的币种和换算
+        function getRecordAmounts(r) {
+            let rm = r.totalPriceRM !== undefined ? r.totalPriceRM : (r.totalPrice || 0);
+            let rmb = r.totalPriceRMB || 0;
+            let converted = r.convertedRMB;
+
+            if (converted === undefined) {
+                // 若历史数据缺失换算，执行规范的对应逻辑换算
+                let adultQty = r.adultCount || 0;
+                let childQty = r.childCount || 0;
+                converted = (adultQty * 35 * 2) + (childQty * 20 * 1.75);
+                if (converted === 0) converted = (rm * 2) + rmb;
+            }
+
+            return { rm, rmb, converted };
+        }
+
         function renderUI() {
             const now = new Date();
             const year = now.getFullYear();
@@ -853,16 +918,21 @@
 
             // 计算今日汇总
             let todayGuests = 0;
-            let todayRevenue = 0;
+            let todayRevenueRM = 0;
+            let todayRevenueRMB = 0;
+            let todayConvertedRMB = 0;
 
             const todayRecords = allRecords.filter(r => r.date === todayStr);
             todayRecords.forEach(r => {
                 todayGuests += (r.totalCount || 0);
-                todayRevenue += (r.totalPrice || 0);
+                const amt = getRecordAmounts(r);
+                todayRevenueRM += amt.rm;
+                todayRevenueRMB += amt.rmb;
+                todayConvertedRMB += amt.converted;
             });
 
             document.getElementById('headerTotalGuests').innerText = `${todayGuests} 人`;
-            document.getElementById('headerTotalRevenue').innerText = `RM ${todayRevenue.toFixed(2)}`;
+            document.getElementById('headerTotalRevenue').innerText = `RM ${todayRevenueRM.toFixed(2)} / RMB ${todayRevenueRMB.toFixed(2)} (换算: RMB ${todayConvertedRMB.toFixed(2)})`;
 
             if (currentTab === 'today') {
                 renderTodayTable(todayRecords);
@@ -883,12 +953,15 @@
 
             [...todayRecords].reverse().forEach(r => {
                 const tr = document.createElement('tr');
+                const amt = getRecordAmounts(r);
+                let priceText = r.displayPrice || `RM ${amt.rm.toFixed(2)}`;
+                
                 tr.innerHTML = `
                     <td>${r.date} ${r.time}</td>
                     <td><b>${r.totalCount}</b> 人</td>
                     <td>${r.details || '-'}</td>
                     <td>${r.paymentMethod}</td>
-                    <td><b style="color: var(--primary-color);">RM ${Number(r.totalPrice).toFixed(2)}</b></td>
+                    <td><b style="color: var(--primary-color);">${priceText}</b></td>
                     <td class="no-print">
                         <button class="btn btn-edit" onclick="openEditModal('${r.id}')">修改</button>
                         <button class="btn btn-danger" onclick="deleteRecord('${r.id}')">删除</button>
@@ -931,8 +1004,18 @@
                 
                 // 筛选当天的记录
                 const dayRecords = allRecords.filter(r => r.date === dateStr);
-                const dayRevenue = dayRecords.reduce((sum, r) => sum + (r.totalPrice || 0), 0);
-                const dayGuests = dayRecords.reduce((sum, r) => sum + (r.totalCount || 0), 0);
+                let dayRM = 0;
+                let dayRMB = 0;
+                let dayConverted = 0;
+                let dayGuests = 0;
+
+                dayRecords.forEach(r => {
+                    const amt = getRecordAmounts(r);
+                    dayRM += amt.rm;
+                    dayRMB += amt.rmb;
+                    dayConverted += amt.converted;
+                    dayGuests += (r.totalCount || 0);
+                });
 
                 const dayDiv = document.createElement('div');
                 dayDiv.className = `calendar-day ${dateStr === todayStr ? 'today' : ''}`;
@@ -942,7 +1025,7 @@
                     <div class="day-num">${day}</div>
                     ${dayRecords.length > 0 ? `
                         <div>
-                            <div class="day-revenue">RM${dayRevenue.toFixed(0)}</div>
+                            <div class="day-revenue">RMB${dayConverted.toFixed(0)}</div>
                             <div class="day-guests">${dayGuests}人</div>
                         </div>
                     ` : ''}
@@ -958,7 +1041,9 @@
             }
             let details = `📅 ${dateStr} 售票明细：\n\n`;
             records.forEach((r, idx) => {
-                details += `${idx + 1}. [${r.time}] ${r.details} | 付款: ${r.paymentMethod} | 金额: RM${r.totalPrice}\n`;
+                const amt = getRecordAmounts(r);
+                let pStr = r.displayPrice || `RM${amt.rm}`;
+                details += `${idx + 1}. [${r.time}] ${r.details} | 付款: ${r.paymentMethod} | 金额: ${pStr}\n`;
             });
             alert(details);
         }
@@ -977,10 +1062,10 @@
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
                 labels.push(`${d}日`);
                 
-                const total = allRecords
+                const dayTotalConverted = allRecords
                     .filter(r => r.date === dateStr)
-                    .reduce((sum, r) => sum + (r.totalPrice || 0), 0);
-                revenueData.push(total);
+                    .reduce((sum, r) => sum + getRecordAmounts(r).converted, 0);
+                revenueData.push(dayTotalConverted);
             }
 
             // 销毁旧图表实例
@@ -992,7 +1077,7 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: '每日总收益 (RM)',
+                        label: '每日收益 (RMB 换算总计)',
                         data: revenueData,
                         borderColor: '#8c2d19',
                         backgroundColor: 'rgba(140, 45, 25, 0.1)',
@@ -1003,29 +1088,53 @@
                 options: { responsive: true, plugins: { legend: { display: false } } }
             });
 
-            // 2. 支付方式占比图表数据准备
+            // 2. 当天时间段分布图 (24小时分布，显示12个时段标记)
             const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
             const monthRecords = allRecords.filter(r => r.date && r.date.startsWith(monthPrefix));
 
-            const paymentCounts = {};
+            // 底层精准统计 24 小时的收益
+            const hourlyRevenue = new Array(24).fill(0);
             monthRecords.forEach(r => {
-                const method = r.paymentMethod || '其他';
-                paymentCounts[method] = (paymentCounts[method] || 0) + (r.totalPrice || 0);
+                if (r.time) {
+                    const hour = parseInt(r.time.split(':')[0], 10);
+                    if (!isNaN(hour) && hour >= 0 && hour < 24) {
+                        hourlyRevenue[hour] += getRecordAmounts(r).converted;
+                    }
+                }
             });
 
-            if (paymentChartInstance) paymentChartInstance.destroy();
+            // 标记点显示 12 个时段: 00:00, 02:00, 04:00, 06:00, 08:00, 10:00, 12:00, 14:00, 16:00, 18:00, 20:00, 22:00
+            const timeLabels = ['00:00', '02:00', '04:00', '06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'];
+            const timeData = [];
 
-            const ctx2 = document.getElementById('paymentChart').getContext('2d');
-            paymentChartInstance = new Chart(ctx2, {
-                type: 'doughnut',
+            for (let i = 0; i < 24; i += 2) {
+                // 将每2小时作为一个区间求和展示
+                const intervalRevenue = hourlyRevenue[i] + hourlyRevenue[i + 1];
+                timeData.push(intervalRevenue);
+            }
+
+            if (timeChartInstance) timeChartInstance.destroy();
+
+            const ctx2 = document.getElementById('timeChart').getContext('2d');
+            timeChartInstance = new Chart(ctx2, {
+                type: 'bar',
                 data: {
-                    labels: Object.keys(paymentCounts),
+                    labels: timeLabels,
                     datasets: [{
-                        data: Object.values(paymentCounts),
-                        backgroundColor: ['#8c2d19', '#d99b26', '#2980b9', '#27ae60', '#8e44ad']
+                        label: '时段收益 (RMB)',
+                        data: timeData,
+                        backgroundColor: '#d99b26',
+                        borderRadius: 4
                     }]
                 },
-                options: { responsive: true }
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { title: { display: true, text: '时间段 (12个显示点)' } },
+                        y: { title: { display: true, text: '收益 (RMB)' } }
+                    }
+                }
             });
         }
 
@@ -1047,8 +1156,3 @@
     </script>
 </body>
 </html>
-
-
-
-//门票收款录入，加rmb的选项 rmb60 成人，rmb35小孩，今日总结算收入加rmb就是比如收了2个成年票用的是rm，就要换成rmb并显示，rm的也是同理。这个你明白吗，这个比较复杂。
-//本月数据可视化分析，支付方式占比不要改为当天时间段。我们的营业时间是平常日10-6，周末9.30-6。然后加上总结，比如在哪个时间段人多。
