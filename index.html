@@ -274,7 +274,6 @@
 
         tr:nth-child(even) { background-color: #f7f3eb; }
 
-        /* 月汇总数据卡片 */
         .month-summary-bar {
             display: flex;
             gap: 15px;
@@ -359,7 +358,6 @@
             text-align: center;
         }
 
-        /* 图表排版 */
         .charts-container {
             display: flex;
             flex-wrap: wrap;
@@ -412,7 +410,6 @@
 </head>
 <body>
 
-    <!-- 顶部时间与状态栏 -->
     <header>
         <div class="header-left">
             <span class="date-display" id="currentDate">----年--月--日</span>
@@ -430,14 +427,12 @@
         </div>
     </header>
 
-    <!-- 水平导航菜单栏 -->
     <nav class="main-nav-bar">
         <div class="nav-item active" id="navInput" onclick="switchMainTab('input')">🎟️ 门票收款录入</div>
         <div class="nav-item" id="navToday" onclick="switchMainTab('today')">📋 今日记录</div>
         <div class="nav-item" id="navHistory" onclick="switchMainTab('history')">📅 历史记录与统计</div>
     </nav>
 
-    <!-- 主体区域 -->
     <main>
 
         <!-- 1. 门票收款录入页面 -->
@@ -518,14 +513,13 @@
             </form>
         </section>
 
-        <!-- 2. 今日记录页面 (包含今日时段客流图表) -->
+        <!-- 2. 今日记录页面 -->
         <section id="sectionToday" class="card" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 2px solid var(--border-color); padding-bottom: 8px;">
                 <h3 style="color: var(--primary-color);">📋 今日实时售票记录</h3>
                 <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.85rem;" onclick="window.print()">🖨️ 打印表格</button>
             </div>
 
-            <!-- 今日 24小时制（每2小时）客流分布图表 -->
             <div class="chart-box" style="margin-bottom: 20px;">
                 <h4 style="text-align: center; margin-bottom: 8px; color: var(--primary-color);">⏰ 今日客流时段分布 (24小时制 / 2小时段)</h4>
                 <div style="height: 220px; width: 100%;">
@@ -545,17 +539,14 @@
                             <th>操作</th>
                         </tr>
                     </thead>
-                    <tbody id="recordsTableBody">
-                        <!-- 动态填充 -->
-                    </tbody>
+                    <tbody id="recordsTableBody"></tbody>
                 </table>
             </div>
         </section>
 
-        <!-- 3. 历史记录与统计页面 (包含月总结算 + 日历 + 月支付占比 + 月时段客流分布图表) -->
+        <!-- 3. 历史记录与统计页面 -->
         <section id="sectionHistory" style="display: none;">
             
-            <!-- 月度总结算收入卡片 -->
             <div class="card">
                 <h3 style="color: var(--primary-color); margin-bottom: 12px; border-bottom: 2px solid var(--border-color); padding-bottom: 8px;" id="monthSummaryTitle">📊 月度总结算统计</h3>
                 <div class="month-summary-bar">
@@ -574,7 +565,6 @@
                 </div>
             </div>
 
-            <!-- 日历与统计图表卡片 -->
             <div class="card">
                 <div class="calendar-controls">
                     <div>
@@ -596,7 +586,6 @@
                 </div>
                 <div class="calendar-grid" id="calendarDays" style="margin-top: 5px;"></div>
 
-                <!-- 图表区域：包含月度时段分布图表 与 支付占比饼图 -->
                 <div class="charts-container">
                     <div class="chart-box" style="flex: 2; min-width: 300px;">
                         <h4 style="text-align: center; margin-bottom: 8px; color: var(--primary-color);">⏰ 本月客流高峰时段 (24小时制 / 2小时段)</h4>
@@ -690,12 +679,10 @@
         let calendarDate = new Date();
         let isEditMode = false;
 
-        // 图表实例定义
         let todayHourlyChartInstance = null;
         let monthHourlyChartInstance = null;
         let paymentChartInstance = null;
 
-        // 24小时制（每2小时区间）定义
         const timeBinsLabels = [
             '00:00-02:00', '02:00-04:00', '04:00-06:00', '06:00-08:00',
             '08:00-10:00', '10:00-12:00', '12:00-14:00', '14:00-16:00',
@@ -962,7 +949,6 @@
             return { totalRM, totalRMB };
         }
 
-        // 辅助计算：按照24小时（每2小时一个分类）归类人数
         function computeHourlyBins(records) {
             const bins = new Array(12).fill(0);
             records.forEach(r => {
@@ -1002,7 +988,6 @@
             }
         }
 
-        // 1. 渲染今日表格
         function renderTodayTable(todayRecords) {
             const tbody = document.getElementById('recordsTableBody');
             tbody.innerHTML = '';
@@ -1027,7 +1012,6 @@
             });
         }
 
-        // 2. 渲染今日24小时制（每2小时）客流分布图表
         function renderTodayHourlyChart(todayRecords) {
             const hourlyData = computeHourlyBins(todayRecords);
 
@@ -1133,14 +1117,13 @@
             }
         }
 
-        // 3. 渲染历史记录（整月）的时段分布图表 与 支付占比饼图
         function renderMonthCharts() {
             const year = calendarDate.getFullYear();
             const month = calendarDate.getMonth();
             const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
             const monthRecords = allRecords.filter(r => r.date && r.date.startsWith(monthPrefix));
 
-            // 1) 算月度时段分布
+            // 1) 月度时段分布柱状图
             const monthHourlyData = computeHourlyBins(monthRecords);
             if (monthHourlyChartInstance) monthHourlyChartInstance.destroy();
 
@@ -1176,7 +1159,7 @@
                 }
             });
 
-            // 2) 算月度支付占比
+            // 2) 完全静态不动的月度支付占比饼图
             const paymentMap = { '现金': 0, "Touch 'n Go (TnG)": 0, '支付宝': 0, '微信支付': 0 };
             let grandTotal = 0;
 
@@ -1202,8 +1185,12 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    animation: false, // 禁用入场动画，防止旋转/跳动
+                    events: [],       // 禁用所有鼠标交互（如 hover 移动、点击膨胀）
+                    hover: { mode: null },
                     plugins: {
                         legend: { display: false },
+                        tooltip: { enabled: false }, // 禁用悬浮提示框
                         datalabels: {
                             display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
                             color: '#ffffff',
