@@ -94,7 +94,7 @@
             color: var(--primary-color);
         }
 
-        /* 同一排水平导航菜单栏 */
+        /* 水平导航菜单栏 */
         .main-nav-bar {
             display: flex;
             justify-content: center;
@@ -274,7 +274,7 @@
 
         tr:nth-child(even) { background-color: #f7f3eb; }
 
-        /* 历史记录与月收入数据卡片样式 */
+        /* 月汇总数据卡片 */
         .month-summary-bar {
             display: flex;
             gap: 15px;
@@ -359,9 +359,11 @@
             text-align: center;
         }
 
+        /* 图表排版 */
         .charts-container {
             display: flex;
-            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
             margin-top: 20px;
         }
 
@@ -370,8 +372,8 @@
             padding: 15px;
             border-radius: 6px;
             border: 1px solid var(--border-color);
-            width: 100%;
-            max-width: 320px;
+            flex: 1;
+            min-width: 280px;
         }
 
         .modal {
@@ -428,7 +430,7 @@
         </div>
     </header>
 
-    <!-- 同一排水平导航菜单栏 -->
+    <!-- 水平导航菜单栏 -->
     <nav class="main-nav-bar">
         <div class="nav-item active" id="navInput" onclick="switchMainTab('input')">🎟️ 门票收款录入</div>
         <div class="nav-item" id="navToday" onclick="switchMainTab('today')">📋 今日记录</div>
@@ -516,12 +518,21 @@
             </form>
         </section>
 
-        <!-- 2. 今日记录页面 -->
+        <!-- 2. 今日记录页面 (包含今日时段客流图表) -->
         <section id="sectionToday" class="card" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 2px solid var(--border-color); padding-bottom: 8px;">
                 <h3 style="color: var(--primary-color);">📋 今日实时售票记录</h3>
                 <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.85rem;" onclick="window.print()">🖨️ 打印表格</button>
             </div>
+
+            <!-- 今日 24小时制（每2小时）客流分布图表 -->
+            <div class="chart-box" style="margin-bottom: 20px;">
+                <h4 style="text-align: center; margin-bottom: 8px; color: var(--primary-color);">⏰ 今日客流时段分布 (24小时制 / 2小时段)</h4>
+                <div style="height: 220px; width: 100%;">
+                    <canvas id="todayHourlyChart"></canvas>
+                </div>
+            </div>
+
             <div class="table-wrapper">
                 <table>
                     <thead>
@@ -541,10 +552,10 @@
             </div>
         </section>
 
-        <!-- 3. 历史记录与统计页面（完整补回：月收入统计卡片 + 月日历 + 图表） -->
+        <!-- 3. 历史记录与统计页面 (包含月总结算 + 日历 + 月支付占比 + 月时段客流分布图表) -->
         <section id="sectionHistory" style="display: none;">
             
-            <!-- 月度总结算收入卡片（补回部分） -->
+            <!-- 月度总结算收入卡片 -->
             <div class="card">
                 <h3 style="color: var(--primary-color); margin-bottom: 12px; border-bottom: 2px solid var(--border-color); padding-bottom: 8px;" id="monthSummaryTitle">📊 月度总结算统计</h3>
                 <div class="month-summary-bar">
@@ -563,14 +574,14 @@
                 </div>
             </div>
 
-            <!-- 日历与支付分布卡片 -->
+            <!-- 日历与统计图表卡片 -->
             <div class="card">
                 <div class="calendar-controls">
                     <div>
                         <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.8rem;" onclick="changeMonth(-1)">◀ 上月</button>
                         <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.8rem;" onclick="changeMonth(1)">下月 ▶</button>
                     </div>
-                    <h3 id="calendarMonthTitle" style="color: var(--primary-color);">2026年 8月</h3>
+                    <h3 id="calendarMonthTitle" style="color: var(--primary-color);">----年 --月</h3>
                     <button class="btn btn-edit" id="toggleEditModeBtn" onclick="toggleEditMode()">✏️ 修改</button>
                 </div>
 
@@ -585,10 +596,17 @@
                 </div>
                 <div class="calendar-grid" id="calendarDays" style="margin-top: 5px;"></div>
 
+                <!-- 图表区域：包含月度时段分布图表 与 支付占比饼图 -->
                 <div class="charts-container">
-                    <div class="chart-box">
-                        <h5 style="text-align: center; margin-bottom: 8px; color: var(--text-light);">本月支付方式占比</h5>
-                        <div style="width: 100%; max-width: 250px; margin: 0 auto;">
+                    <div class="chart-box" style="flex: 2; min-width: 300px;">
+                        <h4 style="text-align: center; margin-bottom: 8px; color: var(--primary-color);">⏰ 本月客流高峰时段 (24小时制 / 2小时段)</h4>
+                        <div style="height: 220px; width: 100%;">
+                            <canvas id="monthHourlyChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-box" style="flex: 1; min-width: 220px;">
+                        <h4 style="text-align: center; margin-bottom: 8px; color: var(--primary-color);">💳 本月支付方式占比</h4>
+                        <div style="width: 100%; max-width: 220px; margin: 0 auto; height: 220px;">
                             <canvas id="paymentChart"></canvas>
                         </div>
                     </div>
@@ -671,7 +689,18 @@
         let currentTab = 'input';
         let calendarDate = new Date();
         let isEditMode = false;
+
+        // 图表实例定义
+        let todayHourlyChartInstance = null;
+        let monthHourlyChartInstance = null;
         let paymentChartInstance = null;
+
+        // 24小时制（每2小时区间）定义
+        const timeBinsLabels = [
+            '00:00-02:00', '02:00-04:00', '04:00-06:00', '06:00-08:00',
+            '08:00-10:00', '10:00-12:00', '12:00-14:00', '14:00-16:00',
+            '16:00-18:00', '18:00-20:00', '20:00-22:00', '22:00-24:00'
+        ];
 
         function updateClock() {
             const now = new Date();
@@ -681,16 +710,13 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        // 水平导航栏切页功能
         function switchMainTab(tabName) {
             currentTab = tabName;
             
-            // 更新导航高亮状态
             document.getElementById('navInput').classList.toggle('active', tabName === 'input');
             document.getElementById('navToday').classList.toggle('active', tabName === 'today');
             document.getElementById('navHistory').classList.toggle('active', tabName === 'history');
 
-            // 切换对应的内容区显示
             document.getElementById('sectionInput').style.display = tabName === 'input' ? 'block' : 'none';
             document.getElementById('sectionToday').style.display = tabName === 'today' ? 'block' : 'none';
             document.getElementById('sectionHistory').style.display = tabName === 'history' ? 'block' : 'none';
@@ -936,6 +962,21 @@
             return { totalRM, totalRMB };
         }
 
+        // 辅助计算：按照24小时（每2小时一个分类）归类人数
+        function computeHourlyBins(records) {
+            const bins = new Array(12).fill(0);
+            records.forEach(r => {
+                if (!r.time) return;
+                const parts = r.time.split(':');
+                const hour = parseInt(parts[0], 10);
+                if (!isNaN(hour) && hour >= 0 && hour < 24) {
+                    const index = Math.floor(hour / 2);
+                    bins[index] += (r.totalCount || 0);
+                }
+            });
+            return bins;
+        }
+
         function renderUI() {
             const todayStr = new Date().toISOString().split('T')[0];
             const todayRecords = allRecords.filter(r => r.date === todayStr);
@@ -953,13 +994,15 @@
 
             if (currentTab === 'today') {
                 renderTodayTable(todayRecords);
+                renderTodayHourlyChart(todayRecords);
             } else if (currentTab === 'history') {
                 renderMonthSummary();
                 renderCalendar();
-                renderCharts();
+                renderMonthCharts();
             }
         }
 
+        // 1. 渲染今日表格
         function renderTodayTable(todayRecords) {
             const tbody = document.getElementById('recordsTableBody');
             tbody.innerHTML = '';
@@ -984,14 +1027,52 @@
             });
         }
 
+        // 2. 渲染今日24小时制（每2小时）客流分布图表
+        function renderTodayHourlyChart(todayRecords) {
+            const hourlyData = computeHourlyBins(todayRecords);
+
+            if (todayHourlyChartInstance) todayHourlyChartInstance.destroy();
+
+            const ctx = document.getElementById('todayHourlyChart').getContext('2d');
+            todayHourlyChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: timeBinsLabels,
+                    datasets: [{
+                        label: '今日人数',
+                        data: hourlyData,
+                        backgroundColor: '#d99b26',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'start',
+                            color: '#3b3228',
+                            font: { weight: 'bold', size: 10 },
+                            formatter: (val) => val > 0 ? `${val}人` : ''
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { stepSize: 1 } },
+                        x: { ticks: { font: { size: 9 } } }
+                    }
+                }
+            });
+        }
+
         function changeMonth(delta) {
             calendarDate.setMonth(calendarDate.getMonth() + delta);
             renderMonthSummary();
             renderCalendar();
-            renderCharts();
+            renderMonthCharts();
         }
 
-        // 渲染月汇总卡片（补回部分）
         function renderMonthSummary() {
             const year = calendarDate.getFullYear();
             const month = calendarDate.getMonth();
@@ -1052,12 +1133,50 @@
             }
         }
 
-        function renderCharts() {
+        // 3. 渲染历史记录（整月）的时段分布图表 与 支付占比饼图
+        function renderMonthCharts() {
             const year = calendarDate.getFullYear();
             const month = calendarDate.getMonth();
             const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
             const monthRecords = allRecords.filter(r => r.date && r.date.startsWith(monthPrefix));
 
+            // 1) 算月度时段分布
+            const monthHourlyData = computeHourlyBins(monthRecords);
+            if (monthHourlyChartInstance) monthHourlyChartInstance.destroy();
+
+            const ctxHourly = document.getElementById('monthHourlyChart').getContext('2d');
+            monthHourlyChartInstance = new Chart(ctxHourly, {
+                type: 'bar',
+                data: {
+                    labels: timeBinsLabels,
+                    datasets: [{
+                        label: '本月人数',
+                        data: monthHourlyData,
+                        backgroundColor: '#8c2d19',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'start',
+                            color: '#3b3228',
+                            font: { weight: 'bold', size: 10 },
+                            formatter: (val) => val > 0 ? `${val}人` : ''
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { stepSize: 1 } },
+                        x: { ticks: { font: { size: 9 } } }
+                    }
+                }
+            });
+
+            // 2) 算月度支付占比
             const paymentMap = { '现金': 0, "Touch 'n Go (TnG)": 0, '支付宝': 0, '微信支付': 0 };
             let grandTotal = 0;
 
@@ -1070,8 +1189,8 @@
 
             if (paymentChartInstance) paymentChartInstance.destroy();
 
-            const ctx = document.getElementById('paymentChart').getContext('2d');
-            paymentChartInstance = new Chart(ctx, {
+            const ctxPay = document.getElementById('paymentChart').getContext('2d');
+            paymentChartInstance = new Chart(ctxPay, {
                 type: 'pie',
                 data: {
                     labels: Object.keys(paymentMap),
@@ -1082,7 +1201,7 @@
                 },
                 options: {
                     responsive: true,
-                    animation: false,
+                    maintainAspectRatio: false,
                     plugins: {
                         legend: { display: false },
                         datalabels: {
