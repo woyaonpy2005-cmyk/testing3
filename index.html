@@ -33,7 +33,7 @@
             background-color: var(--bg-color);
             color: var(--text-color);
             padding: 15px;
-            max-width: 1050px;
+            max-width: 1100px;
             margin: 0 auto;
             line-height: 1.5;
         }
@@ -135,12 +135,12 @@
         }
 
         select, input {
-            padding: 10px;
+            padding: 8px 10px;
             border: 1px solid var(--border-color);
             border-radius: 5px;
             background-color: #fff;
             color: var(--text-color);
-            font-size: 1rem;
+            font-size: 0.95rem;
             outline: none;
             transition: border-color 0.2s;
         }
@@ -237,6 +237,12 @@
         .btn-danger { background-color: var(--danger-color); font-weight: normal; padding: 4px 10px; font-size: 0.85rem;}
         .btn-danger:hover { background-color: #962d22; }
 
+        .btn-xs {
+            padding: 2px 6px;
+            font-size: 0.72rem;
+            border-radius: 3px;
+        }
+
         /* 表格样式 */
         .table-wrapper {
             overflow-x: auto;
@@ -312,7 +318,7 @@
         }
 
         .calendar-day {
-            min-height: 95px;
+            min-height: 105px;
             background: #fff;
             border: 1px solid var(--border-color);
             border-radius: 6px;
@@ -320,12 +326,11 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            cursor: pointer;
+            position: relative;
             transition: transform 0.1s, box-shadow 0.1s;
         }
 
         .calendar-day:hover {
-            transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
 
@@ -338,6 +343,12 @@
         .calendar-day.today {
             border: 2px solid var(--accent-color);
             background-color: #fffdf7;
+        }
+
+        .calendar-day .day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .calendar-day .day-num {
@@ -364,6 +375,16 @@
             text-align: right;
         }
 
+        /* 日历单元格右下角操作按钮区域 */
+        .day-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 4px;
+            margin-top: 4px;
+            border-top: 1px dashed #efe9dd;
+            padding-top: 4px;
+        }
+
         /* 图表布局 */
         .charts-container {
             display: grid;
@@ -379,7 +400,7 @@
             border: 1px solid var(--border-color);
         }
 
-        /* 模态框 (修改数据用) */
+        /* 模态框 (修改/历史列表/补录) */
         .modal {
             display: none;
             position: fixed;
@@ -394,10 +415,12 @@
             background: var(--card-bg);
             padding: 20px;
             border-radius: 8px;
-            width: 90%;
-            max-width: 500px;
+            width: 95%;
+            max-width: 650px;
             box-shadow: var(--shadow);
             border: 1px solid var(--border-color);
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         /* 打印样式控制 */
@@ -502,7 +525,7 @@
             </div>
 
             <div class="form-grid">
-                <!-- 付款方式（正下方） -->
+                <!-- 付款方式 -->
                 <div class="form-group">
                     <label>💳 付款方式：</label>
                     <select id="paymentMethod" required>
@@ -563,7 +586,7 @@
         <div class="card">
             <div class="calendar-controls">
                 <button class="btn btn-secondary" onclick="changeMonth(-1)">◀ 上个月</button>
-                <h3 id="calendarMonthTitle" style="color: var(--primary-color);">2026年 8月</h3>
+                <h3 id="calendarMonthTitle" style="color: var(--primary-color);">----年 --月</h3>
                 <button class="btn btn-secondary" onclick="changeMonth(1)">下个月 ▶</button>
             </div>
             
@@ -597,28 +620,61 @@
         </div>
     </div>
 
-    <!-- 修改记录的 Modal 弹窗 -->
+    <!-- 弹窗 1：某一天历史明细列表 Modal -->
+    <div class="modal" id="dayDetailsModal">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid var(--border-color); padding-bottom: 8px;">
+                <h3 style="color: var(--primary-color);" id="dayDetailsTitle">📅 历史记录明细</h3>
+                <button class="btn btn-edit btn-xs" onclick="openAddModalForDate()">➕ 补录此日数据</button>
+            </div>
+            <div id="dayDetailsList" class="table-wrapper">
+                <!-- 动态渲染某天的表格列表 -->
+            </div>
+            <div style="display: flex; justify-content: flex-end; margin-top: 15px;">
+                <button type="button" class="btn btn-secondary" onclick="closeDayDetailsModal()">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 弹窗 2：修改/补录数据 Modal -->
     <div class="modal" id="editModal">
         <div class="modal-content">
-            <h3 style="color: var(--primary-color); margin-bottom: 15px;">✏️ 修改售票记录</h3>
+            <h3 style="color: var(--primary-color); margin-bottom: 15px;" id="editModalTitle">✏️ 修改/补录记录</h3>
             <form id="editForm" onsubmit="saveEditRecord(event)">
                 <input type="hidden" id="editRecordId">
-                <div class="form-group" style="margin-bottom: 10px;">
-                    <label>成人票人数：</label>
-                    <input type="number" id="editAdultCount" min="0" required onchange="calculateEditTotal()">
+                
+                <!-- 时间调整 -->
+                <div class="form-grid" style="margin-bottom: 10px;">
+                    <div class="form-group">
+                        <label>📅 更改日期：</label>
+                        <input type="date" id="editDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>⏰ 更改时间：</label>
+                        <input type="time" id="editTime" step="1" required>
+                    </div>
                 </div>
-                <div class="form-group" style="margin-bottom: 10px;">
-                    <label>儿童票人数：</label>
-                    <input type="number" id="editChildCount" min="0" required onchange="calculateEditTotal()">
+
+                <div class="form-grid" style="margin-bottom: 10px;">
+                    <div class="form-group">
+                        <label>👨 成人票人数：</label>
+                        <input type="number" id="editAdultCount" min="0" required onchange="calculateEditTotal()">
+                    </div>
+                    <div class="form-group">
+                        <label>🧒 儿童票人数：</label>
+                        <input type="number" id="editChildCount" min="0" required onchange="calculateEditTotal()">
+                    </div>
                 </div>
+
                 <div class="form-group" style="margin-bottom: 10px;">
                     <label class="checkbox-label">
                         <input type="checkbox" id="editGuideCheck" onchange="calculateEditTotal()">
-                        <span>包含导览服务 (RM 30 / RMB 50)</span>
+                        <span>🚩 包含导览服务 (RM 30 / RMB 50)</span>
                     </label>
                 </div>
+
                 <div class="form-group" style="margin-bottom: 10px;">
-                    <label>付款方式：</label>
+                    <label>💳 付款方式：</label>
                     <select id="editPaymentMethod">
                         <option value="现金">💵 现金</option>
                         <option value="Touch 'n Go (TnG)">📱 Touch 'n Go</option>
@@ -626,13 +682,15 @@
                         <option value="微信支付">📱 微信支付</option>
                     </select>
                 </div>
+
                 <div class="form-group" style="margin-bottom: 15px;">
-                    <label>修改后总价格：</label>
+                    <label>💰 显示总价格：</label>
                     <input type="text" id="editTotalPrice" required placeholder="如: RM35 / RMB60">
                 </div>
+
                 <div style="display: flex; justify-content: flex-end; gap: 10px;">
                     <button type="button" class="btn btn-secondary" onclick="closeEditModal()">取消</button>
-                    <button type="submit" class="btn">保存修改</button>
+                    <button type="submit" class="btn">保存更改</button>
                 </div>
             </form>
         </div>
@@ -642,6 +700,7 @@
         let allRecords = [];
         let currentTab = 'today';
         let calendarDate = new Date();
+        let selectedCalendarDateStr = '';
 
         let revenueChartInstance = null;
         let timeChartInstance = null;
@@ -789,6 +848,9 @@
                 const res = await fetch(`/api/records/${id}`, { method: 'DELETE' });
                 if (res.ok) {
                     fetchRecords();
+                    if (selectedCalendarDateStr) {
+                        openDayDetailsModal(selectedCalendarDateStr);
+                    }
                 } else {
                     alert('删除失败');
                 }
@@ -797,17 +859,39 @@
             }
         }
 
+        // 打开编辑模式（可改日期和具体时间）
         function openEditModal(id) {
             const record = allRecords.find(r => r.id == id);
             if (!record) return;
 
+            document.getElementById('editModalTitle').innerText = '✏️ 修改历史售票记录';
             document.getElementById('editRecordId').value = record.id;
+            document.getElementById('editDate').value = record.date;
+            document.getElementById('editTime').value = record.time || '12:00:00';
             document.getElementById('editAdultCount').value = record.adultCount || 0;
             document.getElementById('editChildCount').value = record.childCount || 0;
             document.getElementById('editGuideCheck').checked = !!record.hasGuide;
             document.getElementById('editPaymentMethod').value = record.paymentMethod;
             document.getElementById('editTotalPrice').value = record.displayPrice || `RM${record.totalPrice}`;
 
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        // 为特定日期开启【补录】弹窗
+        function openAddModalForDate(dateStr) {
+            const targetDate = dateStr || selectedCalendarDateStr || new Date().toISOString().split('T')[0];
+            const nowTime = new Date().toTimeString().split(' ')[0];
+
+            document.getElementById('editModalTitle').innerText = `➕ 补录历史记录 (${targetDate})`;
+            document.getElementById('editRecordId').value = ''; // 空 ID 表示新建
+            document.getElementById('editDate').value = targetDate;
+            document.getElementById('editTime').value = nowTime;
+            document.getElementById('editAdultCount').value = 1;
+            document.getElementById('editChildCount').value = 0;
+            document.getElementById('editGuideCheck').checked = false;
+            document.getElementById('editPaymentMethod').value = '现金';
+            
+            calculateEditTotal();
             document.getElementById('editModal').style.display = 'flex';
         }
 
@@ -828,6 +912,8 @@
         async function saveEditRecord(e) {
             e.preventDefault();
             const id = document.getElementById('editRecordId').value;
+            const newDate = document.getElementById('editDate').value;
+            const newTime = document.getElementById('editTime').value;
             const adultCount = parseInt(document.getElementById('editAdultCount').value || 0);
             const childCount = parseInt(document.getElementById('editChildCount').value || 0);
             const hasGuide = document.getElementById('editGuideCheck').checked;
@@ -843,6 +929,9 @@
             let calcRMB = (adultCount * 60) + (childCount * 35) + (hasGuide ? 50 : 0);
 
             const payload = {
+                id: id || Date.now().toString(),
+                date: newDate,
+                time: newTime,
                 adultCount,
                 childCount,
                 hasGuide,
@@ -853,24 +942,30 @@
                 convertedRMB: calcRMB,
                 displayPrice: priceInput,
                 paymentMethod,
-                details: detailsArr.join(', ') || '记录修改'
+                details: detailsArr.join(', ') || '无门票'
             };
 
             try {
-                const res = await fetch(`/api/records/${id}`, {
-                    method: 'PUT',
+                const url = id ? `/api/records/${id}` : '/api/records';
+                const method = id ? 'PUT' : 'POST';
+
+                const res = await fetch(url, {
+                    method: method,
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
 
                 if (res.ok) {
                     closeEditModal();
-                    fetchRecords();
+                    await fetchRecords();
+                    if (selectedCalendarDateStr) {
+                        openDayDetailsModal(selectedCalendarDateStr);
+                    }
                 } else {
-                    alert('更新失败');
+                    alert('保存失败，请重试');
                 }
             } catch (e) {
-                alert('网络错误，更新失败');
+                alert('网络错误，保存失败');
             }
         }
 
@@ -1002,35 +1097,76 @@
 
                 const dayDiv = document.createElement('div');
                 dayDiv.className = `calendar-day ${dateStr === todayStr ? 'today' : ''}`;
-                dayDiv.onclick = () => showDayDetails(dateStr, dayRecords, dayTotalRM, dayTotalRMB);
 
                 dayDiv.innerHTML = `
-                    <div class="day-num">${day}</div>
+                    <div class="day-header">
+                        <span class="day-num">${day}</span>
+                        ${dayGuests > 0 ? `<span class="day-guests">${dayGuests}人</span>` : ''}
+                    </div>
                     ${dayRecords.length > 0 ? `
                         <div>
                             <div class="day-revenue">RM ${dayTotalRM.toFixed(0)}</div>
                             <div class="day-revenue">RMB ${dayTotalRMB.toFixed(0)}</div>
-                            <div class="day-guests">${dayGuests}人</div>
                         </div>
-                    ` : ''}
+                    ` : '<div style="flex:1;"></div>'}
+                    <div class="day-actions">
+                        <button class="btn btn-edit btn-xs" title="修改此日数据" onclick="openDayDetailsModal('${dateStr}')">✏️ 管理</button>
+                        <button class="btn btn-secondary btn-xs" title="补录此日数据" onclick="openAddModalForDate('${dateStr}')">➕ 补录</button>
+                    </div>
                 `;
                 container.appendChild(dayDiv);
             }
         }
 
-        function showDayDetails(dateStr, records, totalRM, totalRMB) {
-            if (records.length === 0) {
-                alert(`${dateStr} 没有记录。`);
-                return;
+        // 打开某天的数据列表弹窗（供修改与管理）
+        function openDayDetailsModal(dateStr) {
+            selectedCalendarDateStr = dateStr;
+            const dayRecords = allRecords.filter(r => r.date === dateStr);
+            
+            document.getElementById('dayDetailsTitle').innerText = `📅 ${dateStr} 数据明细管理`;
+            const container = document.getElementById('dayDetailsList');
+
+            if (dayRecords.length === 0) {
+                container.innerHTML = `<p style="text-align: center; color: var(--text-light); padding: 20px;">该日期暂无售票记录。</p>`;
+            } else {
+                let html = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>时间</th>
+                                <th>明细</th>
+                                <th>付款方式</th>
+                                <th>金额</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                dayRecords.forEach(r => {
+                    const amt = getRecordAmounts(r);
+                    let pStr = r.displayPrice || `RM${amt.totalRM} / RMB${amt.totalRMB}`;
+                    html += `
+                        <tr>
+                            <td>${r.time}</td>
+                            <td>${r.details}</td>
+                            <td>${r.paymentMethod}</td>
+                            <td><b style="color: var(--primary-color);">${pStr}</b></td>
+                            <td>
+                                <button class="btn btn-edit btn-xs" onclick="openEditModal('${r.id}')">修改/调时</button>
+                                <button class="btn btn-danger btn-xs" onclick="deleteRecord('${r.id}')">删除</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                html += `</tbody></table>`;
+                container.innerHTML = html;
             }
-            let details = `📅 ${dateStr} 收款明细：\n`;
-            details += `💰 当日总收益：RM ${totalRM.toFixed(2)} / RMB ${totalRMB.toFixed(2)}\n-----------------------------\n`;
-            records.forEach((r, idx) => {
-                const amt = getRecordAmounts(r);
-                let pStr = r.displayPrice || `RM${amt.totalRM} / RMB${amt.totalRMB}`;
-                details += `${idx + 1}. [${r.time}] ${r.details} | 付款: ${r.paymentMethod} | 金额: ${pStr}\n`;
-            });
-            alert(details);
+
+            document.getElementById('dayDetailsModal').style.display = 'flex';
+        }
+
+        function closeDayDetailsModal() {
+            document.getElementById('dayDetailsModal').style.display = 'none';
         }
 
         function renderCharts() {
