@@ -6,6 +6,8 @@
     <title>门票收银与数据管理系统</title>
     <!-- 引入 Chart.js 用于图表绘制 -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- 引入 Chart.js DataLabels 插件（用于在饼图内部直接显示文字与占比） -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
     <style>
         /* 复古纸张与木质暖色调主题 (Vintage / Retro Palette) */
         :root {
@@ -402,32 +404,6 @@
             max-width: 100%;
         }
 
-        /* 静态支付方式详情文本块 */
-        .payment-legend-list {
-            width: 100%;
-            margin-top: 15px;
-            border-top: 1px dashed var(--border-color);
-            padding-top: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .payment-legend-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.85rem;
-        }
-
-        .payment-legend-color {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border-radius: 3px;
-            margin-right: 6px;
-        }
-
         /* 模态框统一设计 */
         .modal {
             display: none;
@@ -678,15 +654,11 @@
                     <canvas id="timeChart"></canvas>
                 </div>
 
-                <!-- 图表 3：静态支付方式占比统计 (静态饼图 + 直接显示占比数据) -->
+                <!-- 图表 3：静态饼图 (数据直接打印在饼图块内部) -->
                 <div class="chart-box">
                     <h4 style="text-align: center; margin-bottom: 10px; color: var(--text-light);">当月支付方式占比统计</h4>
-                    <div style="width: 100%; max-width: 200px; margin: 0 auto;">
+                    <div style="width: 100%; max-width: 320px; margin: 0 auto;">
                         <canvas id="paymentChart"></canvas>
-                    </div>
-                    <!-- 下方直接打印静态百分比与金额 -->
-                    <div class="payment-legend-list" id="paymentLegendList">
-                        <!-- 由 JS 填充 -->
                     </div>
                 </div>
             </div>
@@ -766,6 +738,9 @@
     </div>
 
     <script>
+        // 全局注册 datalabels 插件
+        Chart.register(ChartDataLabels);
+
         let allRecords = [];
         let currentTab = 'today';
         let calendarDate = new Date();
@@ -1262,7 +1237,7 @@
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
 
-            // --- 1. 每日收益趋势图 (关闭动画) ---
+            // --- 1. 每日收益趋势图 ---
             const labels = [];
             const revenueData = [];
 
@@ -1294,12 +1269,15 @@
                 },
                 options: { 
                     responsive: true, 
-                    animation: false, // 彻底关掉动画
-                    plugins: { legend: { display: false } } 
+                    animation: false,
+                    plugins: { 
+                        legend: { display: false },
+                        datalabels: { display: false } // 趋势图不显示文字插件
+                    } 
                 }
             });
 
-            // --- 2. 当天时间段分布图 (关闭动画) ---
+            // --- 2. 当天时间段分布图 ---
             const singleDayPicker = document.getElementById('singleDayPicker');
             const todayStr = new Date().toISOString().split('T')[0];
             
@@ -1343,8 +1321,11 @@
                 },
                 options: {
                     responsive: true,
-                    animation: false, // 彻底关掉动画
-                    plugins: { legend: { display: false } },
+                    animation: false,
+                    plugins: { 
+                        legend: { display: false },
+                        datalabels: { display: false } //柱状图禁用文字插件
+                    },
                     scales: {
                         x: { title: { display: true, text: '时间段' } },
                         y: { title: { display: true, text: '收益 (RMB)' } }
@@ -1352,7 +1333,7 @@
                 }
             });
 
-            // --- 3. 支付方式占比 (静态饼图 + 下方直接显示具体数值/占比) ---
+            // --- 3. 支付方式静态饼图 (数据直接在饼图扇区内部显示) ---
             const monthRecords = allRecords.filter(r => r.date && r.date.startsWith(monthPrefix));
             const paymentMap = {
                 '现金': 0,
@@ -1394,36 +1375,30 @@
                 },
                 options: {
                     responsive: true,
-                    animation: false, // 彻底关掉动图/旋转效果
+                    animation: false, // 彻底关闭动图/旋转
                     plugins: {
-                        legend: { display: false } // 禁用默认的悬浮小标签，改用下方我们自定义的静态文字
+                        legend: { display: false }, // 隐藏外侧图例
+                        datalabels: {
+                            display: function(context) {
+                                // 占比大于0时才显示文本，避免0元的项堆在一起
+                                return context.dataset.data[context.dataIndex] > 0;
+                            },
+                            color: '#ffffff', // 饼图内部文字颜色为白色
+                            font: {
+                                weight: 'bold',
+                                size: 11
+                            },
+                            textAlign: 'center',
+                            formatter: function(value, context) {
+                                const label = context.chart.data.labels[context.dataIndex];
+                                const percentage = grandTotal > 0 ? ((value / grandTotal) * 100).toFixed(1) : '0.0';
+                                // 在饼图块内部打印三行：名称 / 金额 / 百分比
+                                return `${label}\n¥${value}\n${percentage}%`;
+                            }
+                        }
                     }
                 }
             });
-
-            // 渲染静态文字列表（占比% 与 金额）
-            const legendContainer = document.getElementById('paymentLegendList');
-            let legendHtml = '';
-            
-            Object.keys(paymentMap).forEach(key => {
-                const val = paymentMap[key];
-                const percentage = grandTotal > 0 ? ((val / grandTotal) * 100).toFixed(1) : '0.0';
-                
-                legendHtml += `
-                    <div class="payment-legend-item">
-                        <div>
-                            <span class="payment-legend-color" style="background-color: ${colors[key]};"></span>
-                            <b>${key}</b>
-                        </div>
-                        <div>
-                            <span>RMB ${val.toFixed(2)}</span>
-                            <b style="color: var(--primary-color); margin-left: 8px; font-size:0.9rem;">${percentage}%</b>
-                        </div>
-                    </div>
-                `;
-            });
-
-            legendContainer.innerHTML = legendHtml;
         }
 
         function switchTab(tab) {
