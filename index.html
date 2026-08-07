@@ -6,9 +6,6 @@
     <title>门票收银与数据管理系统</title>
     <!-- 引入 Chart.js 用于图表绘制 -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <!-- 引入 Driver.js 导览服务的样式库 -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.css"/>
 
     <style>
         /* 复古纸张与木质暖色调主题 (Vintage / Retro Palette) */
@@ -237,8 +234,6 @@
 
         .btn-secondary { background-color: #6c757d; }
         .btn-secondary:hover { background-color: #5a6268; }
-        .btn-tour { background-color: #d99b26; }
-        .btn-tour:hover { background-color: #b8821d; }
         .btn-edit { background-color: var(--edit-color); font-weight: normal; padding: 4px 12px; font-size: 0.85rem;}
         .btn-edit:hover { background-color: #1f6391; }
         .btn-danger { background-color: var(--danger-color); font-weight: normal; padding: 4px 10px; font-size: 0.85rem;}
@@ -446,10 +441,6 @@
             gap: 3px;
         }
 
-        .driver-popover {
-            z-index: 100000 !important;
-        }
-
         @media print {
             body { background: white; color: black; padding: 0; }
             header, .card:first-of-type, .nav-tabs, .btn, .no-print, .charts-container, .calendar-controls {
@@ -474,16 +465,15 @@
                 <div class="stat-label">今日总结算人数</div>
                 <div class="stat-value" id="headerTotalGuests">0 人</div>
             </div>
-            <div class="stat-box" id="tour-today-stats">
+            <div class="stat-box">
                 <div class="stat-label">今日总结算收入</div>
                 <div class="stat-value" id="headerTotalRevenue">RM 0.00 / RMB 0.00</div>
             </div>
-            <button class="btn btn-tour" onclick="startGuideTour()">💡 使用指南</button>
         </div>
     </header>
 
     <!-- 录入表单 -->
-    <div class="card" id="tour-form-card">
+    <div class="card">
         <div class="card-title">🎟️ 门票收款录入</div>
         
         <form id="ticketForm" onsubmit="handleFormSubmit(event)">
@@ -541,7 +531,7 @@
                 </div>
 
                 <!-- 导览服务（勾选项） -->
-                <div class="ticket-row" id="tour-guide-option" style="margin-top: 12px; padding-top: 8px; border-top: 1px dashed var(--border-color);">
+                <div class="ticket-row" style="margin-top: 12px; padding-top: 8px; border-top: 1px dashed var(--border-color);">
                     <span class="ticket-type-label">🚩 附加服务：</span>
                     <label class="checkbox-label">
                         <input type="checkbox" id="guideServiceCheck" onchange="calculateFormTotal()">
@@ -573,7 +563,7 @@
     </div>
 
     <!-- 选项卡切换 -->
-    <div class="nav-tabs" id="tour-nav-tabs">
+    <div class="nav-tabs">
         <button class="tab-btn active" id="tabToday" onclick="switchTab('today')">📋 今日记录与管理</button>
         <button class="tab-btn" id="tabHistory" onclick="switchTab('history')">📅 历史记录日历与统计</button>
     </div>
@@ -612,7 +602,7 @@
                     <button class="btn btn-secondary" onclick="changeMonth(-1)">◀ 上个月</button>
                     <button class="btn btn-secondary" onclick="changeMonth(1)" style="margin-left: 5px;">下个月 ▶</button>
                 </div>
-                <h3 id="calendarMonthTitle" style="color: var(--primary-color);">2026年 8月</h3>
+                <h3 id="calendarMonthTitle" style="color: var(--primary-color);">----年 --月</h3>
                 
                 <div>
                     <button class="btn btn-edit" id="toggleEditModeBtn" onclick="toggleEditMode()">✏️ 修改</button>
@@ -720,9 +710,6 @@
         </div>
     </div>
 
-    <!-- 引入 Driver.js 导览脚本库 -->
-    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.js.iife.js"></script>
-
     <script>
         let allRecords = [];
         let currentTab = 'today';
@@ -761,61 +748,6 @@
                 renderCalendar();
                 renderCharts();
             }
-        }
-
-        // 驱动使用指南
-        function startGuideTour() {
-            if (!window.driver || !window.driver.js) {
-                alert("导览服务组件加载失败，请检查网络连接");
-                return;
-            }
-
-            const driverObj = window.driver.js.driver({
-                showProgress: true,
-                nextBtnText: '下一步',
-                prevBtnText: '上一步',
-                doneBtnText: '完成导览',
-                steps: [
-                    { 
-                        element: '#tour-form-card', 
-                        popover: { 
-                            title: '🎟️ 门票收款录入', 
-                            description: '这里用于日常售票录入，可以快速选择成人票、儿童票的人数及支付方式。', 
-                            side: "bottom", 
-                            align: 'start' 
-                        } 
-                    },
-                    { 
-                        element: '#tour-guide-option', 
-                        popover: { 
-                            title: '🚩 附加导览服务', 
-                            description: '如果游客勾选了人工导览服务，勾选此项系统会自动增加 RM 30 / RMB 50 附加费用。', 
-                            side: "top", 
-                            align: 'start' 
-                        } 
-                    },
-                    { 
-                        element: '#tour-today-stats', 
-                        popover: { 
-                            title: '📈 今日数据实时汇总', 
-                            description: '顶部看板会实时同步计算今天的总结算人数与双币种收入。', 
-                            side: "bottom", 
-                            align: 'end' 
-                        } 
-                    },
-                    { 
-                        element: '#tour-nav-tabs', 
-                        popover: { 
-                            title: '📅 视图切换', 
-                            description: '你可以在这里自由切换“今日售票表格”与“历史日历图表分析”。', 
-                            side: "bottom", 
-                            align: 'center' 
-                        } 
-                    }
-                ]
-            });
-
-            driverObj.drive();
         }
 
         // 时钟刷新
@@ -861,10 +793,10 @@
         // 计算表单实时总价与人数
         function getTicketValues() {
             let adultQtySelect = document.getElementById('adultQtySelect').value;
-            let adultQty = adultQtySelect === 'custom' ? parseInt(document.getElementById('adultCustomQty').value || 0) : parseInt(adultQtySelect);
+            let adultQty = adultQtySelect === 'custom' ? parseInt(document.getElementById('adultCustomQty').value || 0) : parseInt(adultQtySelect || 0);
 
             let childQtySelect = document.getElementById('childQtySelect').value;
-            let childQty = childQtySelect === 'custom' ? parseInt(document.getElementById('childCustomQty').value || 0) : parseInt(childQtySelect);
+            let childQty = childQtySelect === 'custom' ? parseInt(document.getElementById('childCustomQty').value || 0) : parseInt(childQtySelect || 0);
 
             let hasGuide = document.getElementById('guideServiceCheck').checked;
 
@@ -973,7 +905,7 @@
                 return;
             }
 
-            todayRecords.reverse().forEach(record => {
+            todayRecords.slice().reverse().forEach(record => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${record.time}</td>
