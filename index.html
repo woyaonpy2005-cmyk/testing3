@@ -381,7 +381,7 @@
             border: 1px solid var(--border-color);
         }
 
-        /* 模态框 (修改/补充数据用) */
+        /* 模态框统一设计 */
         .modal {
             display: none;
             position: fixed;
@@ -396,15 +396,32 @@
             background: var(--card-bg);
             padding: 20px;
             border-radius: 8px;
-            width: 90%;
-            max-width: 500px;
+            width: 95%;
+            max-width: 680px;
             box-shadow: var(--shadow);
             border: 1px solid var(--border-color);
             max-height: 90vh;
             overflow-y: auto;
         }
 
-        /* 打印样式控制 */
+        .history-list-item {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .history-list-info {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
         @media print {
             body { background: white; color: black; padding: 0; }
             header, .card:first-of-type, .nav-tabs, .btn, .no-print, .charts-container, .calendar-controls {
@@ -571,8 +588,8 @@
                     <button class="btn btn-secondary" onclick="changeMonth(1)" style="margin-left: 5px;">下个月 ▶</button>
                 </div>
                 <h3 id="calendarMonthTitle" style="color: var(--primary-color);">2026年 8月</h3>
-                <!-- 右上角统一修改与历史补录按钮 -->
-                <button class="btn btn-edit" onclick="openEditModalForNewHistory()">➕ / ✏️ 补录/修改历史记录</button>
+                <!-- 右上角统一管理的按键 (保持原位置) -->
+                <button class="btn btn-edit" onclick="openHistoryManagerModal()">✏️ / ➕ 修改/添加历史记录</button>
             </div>
             
             <div class="calendar-grid">
@@ -605,20 +622,43 @@
         </div>
     </div>
 
-    <!-- 统一修改/补充历史记录的 Modal 弹窗 -->
-    <div class="modal" id="editModal">
+    <!-- 弹窗：历史记录查看与管理中心 -->
+    <div class="modal" id="historyManagerModal">
         <div class="modal-content">
-            <h3 style="color: var(--primary-color); margin-bottom: 15px;" id="modalHeaderTitle">✏️ 修改售票记录</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-bottom: 15px;">
+                <h3 style="color: var(--primary-color);">📅 历史记录查看与修改</h3>
+                <button class="btn btn-secondary" onclick="closeHistoryManagerModal()">关闭</button>
+            </div>
+
+            <!-- 选日期区域 -->
+            <div style="background: #fcf6ed; padding: 12px; border-radius: 6px; border: 1px dashed var(--border-color); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <label style="font-weight: bold;">选择目标日期：</label>
+                    <input type="date" id="historyFilterDate" onchange="loadHistoryListForDate()">
+                </div>
+                <button class="btn" onclick="openEditFormForNew()"><span style="font-size:1.1rem;">＋</span> 补充该日新记录</button>
+            </div>
+
+            <!-- 数据展示容器 -->
+            <div id="historyListContainer">
+                <!-- 动态渲染该日期下的明细列表 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 弹窗：添加/编辑表单 -->
+    <div class="modal" id="editFormModal" style="z-index: 1050;">
+        <div class="modal-content" style="max-width: 500px;">
+            <h3 style="color: var(--primary-color); margin-bottom: 15px;" id="editFormHeaderTitle">✏️ 修改售票记录</h3>
             <form id="editForm" onsubmit="saveEditRecord(event)">
                 <input type="hidden" id="editRecordId">
                 
-                <!-- 允许调整日期与时间 -->
                 <div class="form-group" style="margin-bottom: 10px;">
-                    <label>选择日期：</label>
+                    <label>确认日期：</label>
                     <input type="date" id="editRecordDate" required>
                 </div>
                 <div class="form-group" style="margin-bottom: 10px;">
-                    <label>选择时间：</label>
+                    <label>调整时间：</label>
                     <input type="time" id="editRecordTime" step="1" required>
                 </div>
 
@@ -646,11 +686,11 @@
                     </select>
                 </div>
                 <div class="form-group" style="margin-bottom: 15px;">
-                    <label>修改/确认总价格：</label>
+                    <label>确认显示金额：</label>
                     <input type="text" id="editTotalPrice" required placeholder="如: RM35 / RMB60">
                 </div>
                 <div style="display: flex; justify-content: flex-end; gap: 10px;">
-                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">取消</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeEditFormModal()">返回列表</button>
                     <button type="submit" class="btn">保存保存数据</button>
                 </div>
             </form>
@@ -805,7 +845,8 @@
             try {
                 const res = await fetch(`/api/records/${id}`, { method: 'DELETE' });
                 if (res.ok) {
-                    fetchRecords();
+                    await fetchRecords();
+                    loadHistoryListForDate(); // 刷新弹窗内的数据
                 } else {
                     alert('删除失败');
                 }
@@ -814,12 +855,73 @@
             }
         }
 
-        // 打开弹窗修改已有记录
-        function openEditModal(id) {
+        /* ---------------- 管理历史弹窗逻辑 ---------------- */
+
+        // 打开“历史记录修改/补充”弹窗
+        function openHistoryManagerModal(defaultDate = null) {
+            const todayStr = new Date().toISOString().split('T')[0];
+            document.getElementById('historyFilterDate').value = defaultDate || todayStr;
+            document.getElementById('historyManagerModal').style.display = 'flex';
+            loadHistoryListForDate();
+        }
+
+        function closeHistoryManagerModal() {
+            document.getElementById('historyManagerModal').style.display = 'none';
+        }
+
+        // 根据选定的日期在弹窗中展示明细数据列表
+        function loadHistoryListForDate() {
+            const selectedDate = document.getElementById('historyFilterDate').value;
+            const container = document.getElementById('historyListContainer');
+
+            if (!selectedDate) {
+                container.innerHTML = '<p style="text-align:center; color: var(--text-light); padding:20px;">请选择日期</p>';
+                return;
+            }
+
+            const dayRecords = allRecords.filter(r => r.date === selectedDate);
+
+            if (dayRecords.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 30px; background: #fff; border-radius: 6px; border: 1px solid var(--border-color);">
+                        <p style="color: var(--text-light); margin-bottom: 10px;">📅 <b>${selectedDate}</b> 暂无任何门票数据</p>
+                        <button class="btn btn-edit" onclick="openEditFormForNew()">➕ 立即在该日期添加一条记录</button>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `<p style="margin-bottom: 10px; font-weight: bold; color: var(--text-light);">📅 ${selectedDate} 共找到 ${dayRecords.length} 条记录：</p>`;
+            
+            dayRecords.forEach((r, idx) => {
+                const amt = getRecordAmounts(r);
+                let priceText = r.displayPrice || `RM${amt.totalRM} / RMB${amt.totalRMB}`;
+
+                html += `
+                    <div class="history-list-item">
+                        <div class="history-list-info">
+                            <div><b>时间：</b>${r.time || '未记时间'} | <b>人数：</b>${r.totalCount || 0}人 (${r.details || '-'})</div>
+                            <div style="font-size: 0.85rem; color: var(--text-light);"><b>付款：</b>${r.paymentMethod} | <b style="color: var(--primary-color);">${priceText}</b></div>
+                        </div>
+                        <div style="display: flex; gap: 6px;">
+                            <button class="btn btn-edit" onclick="openEditFormForExist('${r.id}')">修改</button>
+                            <button class="btn btn-danger" onclick="deleteRecord('${r.id}')">删除</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        /* ---------------- 添加/编辑子弹窗逻辑 ---------------- */
+
+        // 打开编辑已有数据的表单
+        function openEditFormForExist(id) {
             const record = allRecords.find(r => r.id == id);
             if (!record) return;
 
-            document.getElementById('modalHeaderTitle').innerText = '✏️ 修改历史售票记录';
+            document.getElementById('editFormHeaderTitle').innerText = '✏️ 修改售票记录';
             document.getElementById('editRecordId').value = record.id;
             document.getElementById('editRecordDate').value = record.date;
             document.getElementById('editRecordTime').value = record.time || '12:00:00';
@@ -829,31 +931,29 @@
             document.getElementById('editPaymentMethod').value = record.paymentMethod;
             document.getElementById('editTotalPrice').value = record.displayPrice || `RM${record.totalPrice}`;
 
-            document.getElementById('editModal').style.display = 'flex';
+            document.getElementById('editFormModal').style.display = 'flex';
         }
 
-        // 打开弹窗添加新的历史记录/补录数据
-        function openEditModalForNewHistory(selectedDate = null) {
-            document.getElementById('modalHeaderTitle').innerText = '➕ 补录历史数据';
-            document.getElementById('editRecordId').value = ''; // 空ID表示新数据
-            
-            const now = new Date();
-            const todayStr = now.toISOString().split('T')[0];
-            const timeStr = now.toTimeString().split(' ')[0];
+        // 打开添加新数据的表单
+        function openEditFormForNew() {
+            const date = document.getElementById('historyFilterDate').value || new Date().toISOString().split('T')[0];
+            const nowTime = new Date().toTimeString().split(' ')[0];
 
-            document.getElementById('editRecordDate').value = selectedDate || todayStr;
-            document.getElementById('editRecordTime').value = timeStr;
+            document.getElementById('editFormHeaderTitle').innerText = `➕ 补录历史数据 (${date})`;
+            document.getElementById('editRecordId').value = ''; // 空ID代表新建
+            document.getElementById('editRecordDate').value = date;
+            document.getElementById('editRecordTime').value = nowTime;
             document.getElementById('editAdultCount').value = 1;
             document.getElementById('editChildCount').value = 0;
             document.getElementById('editGuideCheck').checked = false;
             document.getElementById('editPaymentMethod').value = '现金';
             calculateEditTotal();
 
-            document.getElementById('editModal').style.display = 'flex';
+            document.getElementById('editFormModal').style.display = 'flex';
         }
 
-        function closeEditModal() {
-            document.getElementById('editModal').style.display = 'none';
+        function closeEditFormModal() {
+            document.getElementById('editFormModal').style.display = 'none';
         }
 
         function calculateEditTotal() {
@@ -866,7 +966,7 @@
             document.getElementById('editTotalPrice').value = `RM${estimatedRM} / RMB${estimatedRMB}`;
         }
 
-        // 保存修改或新增补录记录
+        // 保存新增或修改的数据
         async function saveEditRecord(e) {
             e.preventDefault();
             const id = document.getElementById('editRecordId').value;
@@ -915,8 +1015,9 @@
                 });
 
                 if (res.ok) {
-                    closeEditModal();
-                    fetchRecords();
+                    closeEditFormModal();
+                    await fetchRecords();
+                    loadHistoryListForDate(); // 重新加载列表数据
                 } else {
                     alert('保存失败');
                 }
@@ -924,6 +1025,8 @@
                 alert('网络错误，保存失败');
             }
         }
+
+        /* ---------------- 数据拉取与渲染 ---------------- */
 
         async function fetchRecords() {
             try {
@@ -1002,7 +1105,7 @@
                     <td>${r.paymentMethod}</td>
                     <td><b style="color: var(--primary-color);">${priceText}</b></td>
                     <td class="no-print">
-                        <button class="btn btn-edit" onclick="openEditModal('${r.id}')">修改</button>
+                        <button class="btn btn-edit" onclick="openEditFormForExist('${r.id}')">修改</button>
                         <button class="btn btn-danger" onclick="deleteRecord('${r.id}')">删除</button>
                     </td>
                 `;
@@ -1053,7 +1156,8 @@
 
                 const dayDiv = document.createElement('div');
                 dayDiv.className = `calendar-day ${dateStr === todayStr ? 'today' : ''}`;
-                dayDiv.onclick = () => showDayDetails(dateStr, dayRecords, dayTotalRM, dayTotalRMB);
+                // 点击日历格子，直接以该日期打开历史记录弹窗
+                dayDiv.onclick = () => openHistoryManagerModal(dateStr);
 
                 dayDiv.innerHTML = `
                     <div class="day-num">${day}</div>
@@ -1066,30 +1170,6 @@
                     ` : ''}
                 `;
                 container.appendChild(dayDiv);
-            }
-        }
-
-        // 日历点击某一天弹出该天明细并可以快速修改/补充
-        function showDayDetails(dateStr, records, totalRM, totalRMB) {
-            if (records.length === 0) {
-                if(confirm(`${dateStr} 暂无记录。是否要在该日期添加一条新记录？`)) {
-                    openEditModalForNewHistory(dateStr);
-                }
-                return;
-            }
-
-            let details = `📅 ${dateStr} 收款明细：\n`;
-            details += `💰 当日总收益：RM ${totalRM.toFixed(2)} / RMB ${totalRMB.toFixed(2)}\n-----------------------------\n`;
-            records.forEach((r, idx) => {
-                const amt = getRecordAmounts(r);
-                let pStr = r.displayPrice || `RM${amt.totalRM} / RMB${amt.totalRMB}`;
-                details += `${idx + 1}. [${r.time}] ${r.details} | 付款: ${r.paymentMethod} | 金额: ${pStr}\n`;
-            });
-            
-            details += `\n是否要在此日期 (${dateStr}) 添加新记录？点击“确定”进行补录。`;
-
-            if(confirm(details)) {
-                openEditModalForNewHistory(dateStr);
             }
         }
 
