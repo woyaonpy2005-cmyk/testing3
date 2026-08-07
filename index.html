@@ -233,7 +233,7 @@
 
         .btn-secondary { background-color: #6c757d; }
         .btn-secondary:hover { background-color: #5a6268; }
-        .btn-edit { background-color: var(--edit-color); font-weight: normal; padding: 4px 10px; font-size: 0.85rem;}
+        .btn-edit { background-color: var(--edit-color); font-weight: normal; padding: 4px 12px; font-size: 0.85rem;}
         .btn-edit:hover { background-color: #1f6391; }
         .btn-danger { background-color: var(--danger-color); font-weight: normal; padding: 4px 10px; font-size: 0.85rem;}
         .btn-danger:hover { background-color: #962d22; }
@@ -469,7 +469,7 @@
                 <div class="stat-label">今日总结算收入</div>
                 <div class="stat-value" id="headerTotalRevenue">RM 0.00 / RMB 0.00</div>
             </div>
-            
+        </div>
     </header>
 
     <!-- 录入表单 -->
@@ -542,7 +542,7 @@
             </div>
 
             <div class="form-grid">
-                <!-- 付款方式（正下方） -->
+                <!-- 付款方式 -->
                 <div class="form-group">
                     <label>💳 付款方式：</label>
                     <select id="paymentMethod" required>
@@ -602,15 +602,16 @@
         <!-- 日历卡片 -->
         <div class="card">
             <div class="calendar-controls">
-                <!-- 右上角控制栏修改按钮 -->
-            <button class="btn btn-edit" id="toggleEditModeBtn" onclick="toggleEditMode()">✏️ 修改/编辑模式</button>
-        </div>
                 <div>
                     <button class="btn btn-secondary" onclick="changeMonth(-1)">◀ 上个月</button>
                     <button class="btn btn-secondary" onclick="changeMonth(1)" style="margin-left: 5px;">下个月 ▶</button>
                 </div>
                 <h3 id="calendarMonthTitle" style="color: var(--primary-color);">2026年 8月</h3>
-                <div></div>
+                
+                <!-- 【已调整位置】修改按钮放置在历史日历控制栏右侧 -->
+                <div>
+                    <button class="btn btn-edit" id="toggleEditModeBtn" onclick="toggleEditMode()">✏️ 修改</button>
+                </div>
             </div>
             
             <div class="calendar-grid">
@@ -742,18 +743,18 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        // 切换修改模式开关（右上角控制栏按钮触发）
+        // 切换修改模式开关（位于历史日历右侧）
         function toggleEditMode() {
             isEditMode = !isEditMode;
             const btn = document.getElementById('toggleEditModeBtn');
             if (isEditMode) {
-                btn.innerText = '✅ 退出编辑';
+                btn.innerText = '✅ 完成修改';
                 btn.style.backgroundColor = '#27ae60';
             } else {
-                btn.innerText = '✏️ 修改/编辑模式';
+                btn.innerText = '✏️ 修改';
                 btn.style.backgroundColor = 'var(--edit-color)';
             }
-            renderCalendar(); // 重新渲染日历（显示或隐藏日期下方的修改按键）
+            renderCalendar(); // 重新渲染日历（控制显示/隐藏日期单元格下的“修改/添加”按键）
         }
 
         function toggleCustomQty(selectId, inputId) {
@@ -1183,7 +1184,7 @@
                 const dayDiv = document.createElement('div');
                 dayDiv.className = `calendar-day ${dateStr === todayStr ? 'today' : ''}`;
 
-                // 仅仅当 isEditMode 为 true 时，才在日期单元格下方渲染修改/添加按钮
+                // 当且仅当 isEditMode 为 true 时，才在日期单元格下方显示“修改/添加”按钮
                 const editButtonHtml = isEditMode 
                     ? `<button class="btn-day-edit" onclick="openHistoryManagerModal('${dateStr}')">✏️ 修改/添加</button>`
                     : '';
