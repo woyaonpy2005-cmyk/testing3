@@ -94,7 +94,7 @@
             color: var(--primary-color);
         }
 
-        /* 参考图片样式的同一排水平导航栏 */
+        /* 同一排水平导航菜单栏 */
         .main-nav-bar {
             display: flex;
             justify-content: center;
@@ -135,6 +135,7 @@
             border: 1px solid var(--border-color);
             box-shadow: var(--shadow);
             padding: 25px;
+            margin-bottom: 20px;
         }
 
         .form-grid {
@@ -273,6 +274,36 @@
 
         tr:nth-child(even) { background-color: #f7f3eb; }
 
+        /* 历史记录与月收入数据卡片样式 */
+        .month-summary-bar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .month-stat-card {
+            flex: 1;
+            min-width: 200px;
+            background: #fcf6ed;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .month-stat-title {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-bottom: 4px;
+        }
+
+        .month-stat-num {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
         .calendar-controls {
             display: flex;
             justify-content: space-between;
@@ -397,18 +428,19 @@
         </div>
     </header>
 
-    <!-- 同一排水平导航菜单栏（如参考图片） -->
+    <!-- 同一排水平导航菜单栏 -->
     <nav class="main-nav-bar">
         <div class="nav-item active" id="navInput" onclick="switchMainTab('input')">🎟️ 门票收款录入</div>
         <div class="nav-item" id="navToday" onclick="switchMainTab('today')">📋 今日记录</div>
         <div class="nav-item" id="navHistory" onclick="switchMainTab('history')">📅 历史记录与统计</div>
     </nav>
 
-    <!-- 下方主要内容区卡片 -->
-    <main class="card">
+    <!-- 主体区域 -->
+    <main>
 
         <!-- 1. 门票收款录入页面 -->
-        <section id="sectionInput">
+        <section id="sectionInput" class="card">
+            <h3 style="color: var(--primary-color); margin-bottom: 15px; border-bottom: 2px solid var(--border-color); padding-bottom: 8px;">🎟️ 门票收款录入</h3>
             <form id="ticketForm" onsubmit="handleFormSubmit(event)">
                 <div class="ticket-box">
                     <label style="margin-bottom: 12px; display: block; font-size: 1rem;">选择门票类型与数量：</label>
@@ -485,8 +517,8 @@
         </section>
 
         <!-- 2. 今日记录页面 -->
-        <section id="sectionToday" style="display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <section id="sectionToday" class="card" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 2px solid var(--border-color); padding-bottom: 8px;">
                 <h3 style="color: var(--primary-color);">📋 今日实时售票记录</h3>
                 <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.85rem;" onclick="window.print()">🖨️ 打印表格</button>
             </div>
@@ -509,36 +541,60 @@
             </div>
         </section>
 
-        <!-- 3. 历史记录与统计页面 -->
+        <!-- 3. 历史记录与统计页面（完整补回：月收入统计卡片 + 月日历 + 图表） -->
         <section id="sectionHistory" style="display: none;">
-            <div class="calendar-controls">
-                <div>
-                    <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.8rem;" onclick="changeMonth(-1)">◀ 上月</button>
-                    <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.8rem;" onclick="changeMonth(1)">下月 ▶</button>
-                </div>
-                <h3 id="calendarMonthTitle" style="color: var(--primary-color);">2026年 8月</h3>
-                <button class="btn btn-edit" id="toggleEditModeBtn" onclick="toggleEditMode()">✏️ 修改</button>
-            </div>
-
-            <div class="calendar-grid">
-                <div class="calendar-day-head">日</div>
-                <div class="calendar-day-head">一</div>
-                <div class="calendar-day-head">二</div>
-                <div class="calendar-day-head">三</div>
-                <div class="calendar-day-head">四</div>
-                <div class="calendar-day-head">五</div>
-                <div class="calendar-day-head">六</div>
-            </div>
-            <div class="calendar-grid" id="calendarDays" style="margin-top: 5px;"></div>
-
-            <div class="charts-container">
-                <div class="chart-box">
-                    <h5 style="text-align: center; margin-bottom: 8px; color: var(--text-light);">本月支付方式占比</h5>
-                    <div style="width: 100%; max-width: 250px; margin: 0 auto;">
-                        <canvas id="paymentChart"></canvas>
+            
+            <!-- 月度总结算收入卡片（补回部分） -->
+            <div class="card">
+                <h3 style="color: var(--primary-color); margin-bottom: 12px; border-bottom: 2px solid var(--border-color); padding-bottom: 8px;" id="monthSummaryTitle">📊 月度总结算统计</h3>
+                <div class="month-summary-bar">
+                    <div class="month-stat-card">
+                        <div class="month-stat-title">本月总客流量</div>
+                        <div class="month-stat-num" id="monthTotalGuests">0 人</div>
+                    </div>
+                    <div class="month-stat-card">
+                        <div class="month-stat-title">本月总结算收入 (RM)</div>
+                        <div class="month-stat-num" id="monthTotalRM">RM 0.00</div>
+                    </div>
+                    <div class="month-stat-card">
+                        <div class="month-stat-title">本月总结算收入 (RMB)</div>
+                        <div class="month-stat-num" id="monthTotalRMB">RMB 0.00</div>
                     </div>
                 </div>
             </div>
+
+            <!-- 日历与支付分布卡片 -->
+            <div class="card">
+                <div class="calendar-controls">
+                    <div>
+                        <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.8rem;" onclick="changeMonth(-1)">◀ 上月</button>
+                        <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.8rem;" onclick="changeMonth(1)">下月 ▶</button>
+                    </div>
+                    <h3 id="calendarMonthTitle" style="color: var(--primary-color);">2026年 8月</h3>
+                    <button class="btn btn-edit" id="toggleEditModeBtn" onclick="toggleEditMode()">✏️ 修改</button>
+                </div>
+
+                <div class="calendar-grid">
+                    <div class="calendar-day-head">日</div>
+                    <div class="calendar-day-head">一</div>
+                    <div class="calendar-day-head">二</div>
+                    <div class="calendar-day-head">三</div>
+                    <div class="calendar-day-head">四</div>
+                    <div class="calendar-day-head">五</div>
+                    <div class="calendar-day-head">六</div>
+                </div>
+                <div class="calendar-grid" id="calendarDays" style="margin-top: 5px;"></div>
+
+                <div class="charts-container">
+                    <div class="chart-box">
+                        <h5 style="text-align: center; margin-bottom: 8px; color: var(--text-light);">本月支付方式占比</h5>
+                        <div style="width: 100%; max-width: 250px; margin: 0 auto;">
+                            <canvas id="paymentChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </section>
 
     </main>
@@ -898,6 +954,7 @@
             if (currentTab === 'today') {
                 renderTodayTable(todayRecords);
             } else if (currentTab === 'history') {
+                renderMonthSummary();
                 renderCalendar();
                 renderCharts();
             }
@@ -929,8 +986,31 @@
 
         function changeMonth(delta) {
             calendarDate.setMonth(calendarDate.getMonth() + delta);
+            renderMonthSummary();
             renderCalendar();
             renderCharts();
+        }
+
+        // 渲染月汇总卡片（补回部分）
+        function renderMonthSummary() {
+            const year = calendarDate.getFullYear();
+            const month = calendarDate.getMonth();
+            const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
+            const monthRecords = allRecords.filter(r => r.date && r.date.startsWith(monthPrefix));
+
+            document.getElementById('monthSummaryTitle').innerText = `📊 ${year}年${month + 1}月度总结算统计`;
+
+            let mGuests = 0, mRM = 0, mRMB = 0;
+            monthRecords.forEach(r => {
+                mGuests += (r.totalCount || 0);
+                const amt = getRecordAmounts(r);
+                mRM += amt.totalRM;
+                mRMB += amt.totalRMB;
+            });
+
+            document.getElementById('monthTotalGuests').innerText = `${mGuests} 人`;
+            document.getElementById('monthTotalRM').innerText = `RM ${mRM.toFixed(2)}`;
+            document.getElementById('monthTotalRMB').innerText = `RMB ${mRMB.toFixed(2)}`;
         }
 
         function renderCalendar() {
@@ -1026,3 +1106,4 @@
     </script>
 </body>
 </html>
+                            
