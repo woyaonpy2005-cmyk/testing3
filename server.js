@@ -18,7 +18,7 @@ mongoose.connect(MONGO_URI)
     .then(() => console.log('✅ 成功连接至 MongoDB Atlas 云数据库'))
     .catch(err => console.error('❌ MongoDB 连接失败:', err));
 
-// 2. 数据结构定义 (更新支持 RM/RMB 及换算字段)
+// 2. 数据结构定义 (更新支持 RM/RMB 及导览服务 hasGuide 字段)
 const recordSchema = new mongoose.Schema({
     id: { type: String, required: true, unique: true },
     date: { type: String, required: true },
@@ -26,10 +26,10 @@ const recordSchema = new mongoose.Schema({
     currency: { type: String, default: 'MYR' },
     adultCount: { type: Number, default: 0 },
     childCount: { type: Number, default: 0 },
+    hasGuide: { type: Boolean, default: false }, // ✅ 补上导览服务字段，防止数据丢失
     totalCount: { type: Number, default: 0 },
     paymentMethod: { type: String, required: true },
     totalPrice: { type: Number, default: 0 },
-    // 新增字段匹配前端提交的数据
     totalPriceRM: { type: Number, default: 0 },
     totalPriceRMB: { type: Number, default: 0 },
     convertedRMB: { type: Number, default: 0 },
@@ -59,7 +59,7 @@ app.post('/api/records', async (req, res) => {
         await newRecord.save();
         res.json({ success: true, record: newRecord });
     } catch (err) {
-        console.error("POST 提交失败，具体原因:", err); // 在终端打印精准错误
+        console.error("POST 提交失败，具体原因:", err);
         res.status(500).json({ error: '数据保存失败', details: err.message });
     }
 });
