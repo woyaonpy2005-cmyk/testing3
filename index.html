@@ -154,7 +154,7 @@
             display: none;
         }
 
-        /* 门票选择区块 */
+        /* 门票与附加服务区块 */
         .ticket-box {
             border: 1px dashed var(--border-color);
             padding: 12px;
@@ -176,9 +176,24 @@
         }
 
         .ticket-type-label {
-            width: 90px;
+            width: 110px;
             font-weight: bold;
             font-size: 0.95rem;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            user-select: none;
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
         }
 
         /* 按钮与汇总 */
@@ -422,9 +437,9 @@
         <div class="card-title">🎟️ 门票收款录入</div>
         
         <form id="ticketForm" onsubmit="handleFormSubmit(event)">
-            <!-- 门票组合多选区域 -->
+            <!-- 门票与附加服务组合区域 -->
             <div class="ticket-box">
-                <label style="margin-bottom: 10px; display: block;">设置门票数量与价格（支持同时勾选/填写）：</label>
+                <label style="margin-bottom: 10px; display: block;">设置门票数量与价格：</label>
                 
                 <!-- 成人票 -->
                 <div class="ticket-row">
@@ -446,11 +461,9 @@
                     <input type="number" id="adultCustomQty" class="custom-input" placeholder="1-100" min="1" max="100" style="width: 90px;">
                     
                     <span style="margin-left: 10px;">单价：</span>
-                    <select id="adultPriceSelect" onchange="toggleCustomPrice('adultPriceSelect', 'adultCustomPrice')">
+                    <select id="adultPriceSelect">
                         <option value="RM35">RM35 / RMB60</option>
-                        <option value="custom">自定义单价...</option>
                     </select>
-                    <input type="number" id="adultCustomPrice" class="custom-input" placeholder="1-999" min="1" max="999" style="width: 100px;">
                 </div>
 
                 <!-- 儿童票 -->
@@ -473,16 +486,23 @@
                     <input type="number" id="childCustomQty" class="custom-input" placeholder="1-100" min="1" max="100" style="width: 90px;">
                     
                     <span style="margin-left: 10px;">单价：</span>
-                    <select id="childPriceSelect" onchange="toggleCustomPrice('childPriceSelect', 'childCustomPrice')">
+                    <select id="childPriceSelect">
                         <option value="RM20">RM20 / RMB35</option>
-                        <option value="custom">自定义单价...</option>
                     </select>
-                    <input type="number" id="childCustomPrice" class="custom-input" placeholder="1-999" min="1" max="999" style="width: 100px;">
+                </div>
+
+                <!-- 导览服务（勾选项） -->
+                <div class="ticket-row" style="margin-top: 12px; padding-top: 8px; border-top: 1px dashed var(--border-color);">
+                    <span class="ticket-type-label">🚩 附加服务：</span>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="guideServiceCheck" onchange="calculateFormTotal()">
+                        <span>勾选导览 (RM 30 / RMB 50)</span>
+                    </label>
                 </div>
             </div>
 
             <div class="form-grid">
-                <!-- 付款方式 -->
+                <!-- 付款方式（正下方） -->
                 <div class="form-group">
                     <label>💳 付款方式：</label>
                     <select id="paymentMethod" required>
@@ -524,7 +544,7 @@
                     <tr>
                         <th>日期时间</th>
                         <th>总人数</th>
-                        <th>门票价格明细</th>
+                        <th>收费明细</th>
                         <th>付款方式</th>
                         <th>总价格</th>
                         <th class="no-print">操作</th>
@@ -592,6 +612,12 @@
                     <input type="number" id="editChildCount" min="0" required onchange="calculateEditTotal()">
                 </div>
                 <div class="form-group" style="margin-bottom: 10px;">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="editGuideCheck" onchange="calculateEditTotal()">
+                        <span>包含导览服务 (RM 30 / RMB 50)</span>
+                    </label>
+                </div>
+                <div class="form-group" style="margin-bottom: 10px;">
                     <label>付款方式：</label>
                     <select id="editPaymentMethod">
                         <option value="现金">💵 现金</option>
@@ -615,7 +641,7 @@
     <script>
         let allRecords = [];
         let currentTab = 'today';
-        let calendarDate = new Date(); // 日历当前预览的时间
+        let calendarDate = new Date();
 
         let revenueChartInstance = null;
         let timeChartInstance = null;
@@ -636,7 +662,6 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        // 切换自定义输入框显示
         function toggleCustomQty(selectId, inputId) {
             const select = document.getElementById(selectId);
             const input = document.getElementById(inputId);
@@ -650,20 +675,7 @@
             calculateFormTotal();
         }
 
-        function toggleCustomPrice(selectId, inputId) {
-            const select = document.getElementById(selectId);
-            const input = document.getElementById(inputId);
-            if (select.value === 'custom') {
-                input.style.display = 'inline-block';
-                input.required = true;
-            } else {
-                input.style.display = 'none';
-                input.required = false;
-            }
-            calculateFormTotal();
-        }
-
-        // 计算表单实时总价与人数（固定匹配：成人票 RM35=RMB60，儿童票 RM20=RMB35）
+        // 计算表单实时总价与人数（含导览选项：固定 RM30 = RMB50）
         function getTicketValues() {
             let adultQtySelect = document.getElementById('adultQtySelect').value;
             let adultQty = adultQtySelect === 'custom' ? parseInt(document.getElementById('adultCustomQty').value || 0) : parseInt(adultQtySelect);
@@ -671,19 +683,29 @@
             let childQtySelect = document.getElementById('childQtySelect').value;
             let childQty = childQtySelect === 'custom' ? parseInt(document.getElementById('childCustomQty').value || 0) : parseInt(childQtySelect);
 
+            let hasGuide = document.getElementById('guideServiceCheck').checked;
+
             let totalCount = adultQty + childQty;
 
-            // 完全固定计算逻辑：不搞比例换算，张数直接乘固定单价
+            // 固定基础价格
             let totalPriceRM = (adultQty * 35) + (childQty * 20);
             let totalPriceRMB = (adultQty * 60) + (childQty * 35);
+
+            // 加上导览服务 RM30 / RMB50
+            if (hasGuide) {
+                totalPriceRM += 30;
+                totalPriceRMB += 50;
+            }
 
             let detailsArr = [];
             if (adultQty > 0) detailsArr.push(`成人票 x${adultQty}`);
             if (childQty > 0) detailsArr.push(`儿童票 x${childQty}`);
+            if (hasGuide) detailsArr.push(`导览服务`);
 
             return {
                 adultQty,
                 childQty,
+                hasGuide,
                 totalCount,
                 totalPriceRM,
                 totalPriceRMB,
@@ -708,8 +730,8 @@
             e.preventDefault();
             const ticketData = getTicketValues();
 
-            if (ticketData.totalCount <= 0) {
-                alert('请至少选择或输入 1 位客人的门票！');
+            if (ticketData.totalCount <= 0 && !ticketData.hasGuide) {
+                alert('请选择门票人数或勾选导览服务！');
                 return;
             }
 
@@ -728,6 +750,7 @@
                 time: timeStr,
                 adultCount: ticketData.adultQty,
                 childCount: ticketData.childQty,
+                hasGuide: ticketData.hasGuide,
                 totalCount: ticketData.totalCount,
                 paymentMethod: document.getElementById('paymentMethod').value,
                 totalPrice: ticketData.totalPriceRM,
@@ -748,9 +771,7 @@
                 if (res.ok) {
                     document.getElementById('ticketForm').reset();
                     document.getElementById('adultCustomQty').style.display = 'none';
-                    document.getElementById('adultCustomPrice').style.display = 'none';
                     document.getElementById('childCustomQty').style.display = 'none';
-                    document.getElementById('childCustomPrice').style.display = 'none';
                     calculateFormTotal();
                     fetchRecords();
                 } else {
@@ -761,9 +782,8 @@
             }
         }
 
-        // 修改与删除功能
         async function deleteRecord(id) {
-            if (!confirm("确定要删除这条售票记录吗？此操作无法撤销。")) return;
+            if (!confirm("确定要删除这条记录吗？此操作无法撤销。")) return;
 
             try {
                 const res = await fetch(`/api/records/${id}`, { method: 'DELETE' });
@@ -784,6 +804,7 @@
             document.getElementById('editRecordId').value = record.id;
             document.getElementById('editAdultCount').value = record.adultCount || 0;
             document.getElementById('editChildCount').value = record.childCount || 0;
+            document.getElementById('editGuideCheck').checked = !!record.hasGuide;
             document.getElementById('editPaymentMethod').value = record.paymentMethod;
             document.getElementById('editTotalPrice').value = record.displayPrice || `RM${record.totalPrice}`;
 
@@ -797,8 +818,10 @@
         function calculateEditTotal() {
             const adult = parseInt(document.getElementById('editAdultCount').value || 0);
             const child = parseInt(document.getElementById('editChildCount').value || 0);
-            const estimatedRM = (adult * 35) + (child * 20);
-            const estimatedRMB = (adult * 60) + (child * 35);
+            const hasGuide = document.getElementById('editGuideCheck').checked;
+
+            let estimatedRM = (adult * 35) + (child * 20) + (hasGuide ? 30 : 0);
+            let estimatedRMB = (adult * 60) + (child * 35) + (hasGuide ? 50 : 0);
             document.getElementById('editTotalPrice').value = `RM${estimatedRM} / RMB${estimatedRMB}`;
         }
 
@@ -807,19 +830,22 @@
             const id = document.getElementById('editRecordId').value;
             const adultCount = parseInt(document.getElementById('editAdultCount').value || 0);
             const childCount = parseInt(document.getElementById('editChildCount').value || 0);
+            const hasGuide = document.getElementById('editGuideCheck').checked;
             const priceInput = document.getElementById('editTotalPrice').value;
             const paymentMethod = document.getElementById('editPaymentMethod').value;
 
             let detailsArr = [];
             if (adultCount > 0) detailsArr.push(`成人票 x${adultCount}`);
             if (childCount > 0) detailsArr.push(`儿童票 x${childCount}`);
+            if (hasGuide) detailsArr.push(`导览服务`);
 
-            let calcRM = (adultCount * 35) + (childCount * 20);
-            let calcRMB = (adultCount * 60) + (childCount * 35);
+            let calcRM = (adultCount * 35) + (childCount * 20) + (hasGuide ? 30 : 0);
+            let calcRMB = (adultCount * 60) + (childCount * 35) + (hasGuide ? 50 : 0);
 
             const payload = {
                 adultCount,
                 childCount,
+                hasGuide,
                 totalCount: adultCount + childCount,
                 totalPrice: calcRM,
                 totalPriceRM: calcRM,
@@ -827,7 +853,7 @@
                 convertedRMB: calcRMB,
                 displayPrice: priceInput,
                 paymentMethod,
-                details: detailsArr.join(', ') || '门票修改'
+                details: detailsArr.join(', ') || '记录修改'
             };
 
             try {
@@ -848,7 +874,6 @@
             }
         }
 
-        // 获取并渲染数据
         async function fetchRecords() {
             try {
                 const res = await fetch('/api/records');
@@ -859,15 +884,14 @@
             }
         }
 
-        // 解析每条记录对应的固定 RM 和 RMB
         function getRecordAmounts(r) {
             let adultQty = r.adultCount || 0;
             let childQty = r.childCount || 0;
+            let hasGuide = !!r.hasGuide;
 
-            let totalRM = (adultQty * 35) + (childQty * 20);
-            let totalRMB = (adultQty * 60) + (childQty * 35);
+            let totalRM = (adultQty * 35) + (childQty * 20) + (hasGuide ? 30 : 0);
+            let totalRMB = (adultQty * 60) + (childQty * 35) + (hasGuide ? 50 : 0);
 
-            // 如果旧数据没有保存人数，回退到原字段
             if (totalRM === 0 && (r.totalPriceRM || r.totalPrice)) {
                 totalRM = r.totalPriceRM || r.totalPrice || 0;
                 totalRMB = r.totalPriceRMB || r.convertedRMB || 0;
@@ -883,7 +907,6 @@
             const day = String(now.getDate()).padStart(2, '0');
             const todayStr = `${year}-${month}-${day}`;
 
-            // 计算今日汇总
             let todayGuests = 0;
             let todayTotalRM = 0;
             let todayTotalRMB = 0;
@@ -912,7 +935,7 @@
             tbody.innerHTML = '';
 
             if (todayRecords.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" style="color: var(--text-light); padding: 20px;">今日暂无售票记录</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" style="color: var(--text-light); padding: 20px;">今日暂无记录</td></tr>`;
                 return;
             }
 
@@ -936,7 +959,6 @@
             });
         }
 
-        /* 日历渲染逻辑 */
         function changeMonth(delta) {
             calendarDate.setMonth(calendarDate.getMonth() + delta);
             renderCalendar();
@@ -955,7 +977,6 @@
             const container = document.getElementById('calendarDays');
             container.innerHTML = '';
 
-            // 空白补齐
             for (let i = 0; i < firstDay; i++) {
                 const emptyDiv = document.createElement('div');
                 emptyDiv.className = 'calendar-day empty';
@@ -967,7 +988,6 @@
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 
-                // 筛选当天的记录
                 const dayRecords = allRecords.filter(r => r.date === dateStr);
                 let dayTotalRM = 0;
                 let dayTotalRMB = 0;
@@ -1000,10 +1020,10 @@
 
         function showDayDetails(dateStr, records, totalRM, totalRMB) {
             if (records.length === 0) {
-                alert(`${dateStr} 没有售票记录。`);
+                alert(`${dateStr} 没有记录。`);
                 return;
             }
-            let details = `📅 ${dateStr} 售票明细：\n`;
+            let details = `📅 ${dateStr} 收款明细：\n`;
             details += `💰 当日总收益：RM ${totalRM.toFixed(2)} / RMB ${totalRMB.toFixed(2)}\n-----------------------------\n`;
             records.forEach((r, idx) => {
                 const amt = getRecordAmounts(r);
@@ -1013,13 +1033,11 @@
             alert(details);
         }
 
-        /* Chart.js 图表渲染逻辑 */
         function renderCharts() {
             const year = calendarDate.getFullYear();
             const month = calendarDate.getMonth();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-            // 1. 月度每日收益图表数据准备
             const labels = [];
             const revenueData = [];
 
@@ -1033,7 +1051,6 @@
                 revenueData.push(dayTotalConverted);
             }
 
-            // 销毁旧图表实例
             if (revenueChartInstance) revenueChartInstance.destroy();
 
             const ctx1 = document.getElementById('revenueChart').getContext('2d');
@@ -1053,11 +1070,9 @@
                 options: { responsive: true, plugins: { legend: { display: false } } }
             });
 
-            // 2. 当天时间段分布图 (24小时分布，显示12个时段标记)
             const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
             const monthRecords = allRecords.filter(r => r.date && r.date.startsWith(monthPrefix));
 
-            // 底层精准统计 24 小时的收益
             const hourlyRevenue = new Array(24).fill(0);
             monthRecords.forEach(r => {
                 if (r.time) {
@@ -1068,12 +1083,10 @@
                 }
             });
 
-            // 标记点显示 12 个时段: 00:00, 02:00, 04:00, 06:00, 08:00, 10:00, 12:00, 14:00, 16:00, 18:00, 20:00, 22:00
             const timeLabels = ['00:00', '02:00', '04:00', '06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'];
             const timeData = [];
 
             for (let i = 0; i < 24; i += 2) {
-                // 将每2小时作为一个区间求和展示
                 const intervalRevenue = hourlyRevenue[i] + hourlyRevenue[i + 1];
                 timeData.push(intervalRevenue);
             }
@@ -1103,7 +1116,6 @@
             });
         }
 
-        // 标签切换控制
         function switchTab(tab) {
             currentTab = tab;
             document.getElementById('tabToday').classList.toggle('active', tab === 'today');
@@ -1115,7 +1127,6 @@
             renderUI();
         }
 
-        // 定时轮询与数据刷新
         setInterval(fetchRecords, 5000);
         fetchRecords();
     </script>
