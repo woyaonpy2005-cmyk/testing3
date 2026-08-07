@@ -608,8 +608,12 @@
                 </div>
                 <h3 id="calendarMonthTitle" style="color: var(--primary-color);">2026年 8月</h3>
                 
-                <!-- 【已调整位置】修改按钮放置在历史日历控制栏右侧 -->
-                <div>
+                <!-- 【已调整位置】在历史日历控制栏右侧增加了月总收入显示 -->
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <div class="stat-box" style="text-align: left; padding: 4px 10px;">
+                        <div class="stat-label">当月总收入</div>
+                        <div class="stat-value" id="monthTotalRevenue" style="font-size: 0.95rem;">RM 0.00 / RMB 0.00</div>
+                    </div>
                     <button class="btn btn-edit" id="toggleEditModeBtn" onclick="toggleEditMode()">✏️ 修改</button>
                 </div>
             </div>
@@ -754,7 +758,7 @@
                 btn.innerText = '✏️ 修改';
                 btn.style.backgroundColor = 'var(--edit-color)';
             }
-            renderCalendar(); // 重新渲染日历
+            renderCalendar(); // 重新渲染日历（控制显示/隐藏日期单元格下的“修改/添加”按键）
         }
 
         function toggleCustomQty(selectId, inputId) {
@@ -1065,19 +1069,17 @@
             }
         }
 
-        // 修改处的关键逻辑：优先直接获取存储的总价（此总价已包含导览服务）
         function getRecordAmounts(r) {
-            let totalRM = r.totalPriceRM ?? r.totalPrice ?? 0;
-            let totalRMB = r.totalPriceRMB ?? r.convertedRMB ?? 0;
+            let adultQty = r.adultCount || 0;
+            let childQty = r.childCount || 0;
+            let hasGuide = !!r.hasGuide;
 
-            // 如果数据库中的保存价格为 0，才通过票数和导览标志进行重新演算
-            if (totalRM === 0 && totalRMB === 0) {
-                let adultQty = r.adultCount || 0;
-                let childQty = r.childCount || 0;
-                let hasGuide = !!r.hasGuide;
+            let totalRM = (adultQty * 35) + (childQty * 20) + (hasGuide ? 30 : 0);
+            let totalRMB = (adultQty * 60) + (childQty * 35) + (hasGuide ? 50 : 0);
 
-                totalRM = (adultQty * 35) + (childQty * 20) + (hasGuide ? 30 : 0);
-                totalRMB = (adultQty * 60) + (childQty * 35) + (hasGuide ? 50 : 0);
+            if (totalRM === 0 && (r.totalPriceRM || r.totalPrice)) {
+                totalRM = r.totalPriceRM || r.totalPrice || 0;
+                totalRMB = r.totalPriceRMB || r.convertedRMB || 0;
             }
 
             return { totalRM, totalRMB };
@@ -1154,6 +1156,22 @@
             
             document.getElementById('calendarMonthTitle').innerText = `${year}年 ${month + 1}月`;
 
+            // 计算当前选中月份的月总收入
+            const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
+            let monthTotalRM = 0;
+            let monthTotalRMB = 0;
+
+            allRecords.filter(r => r.date && r.date.startsWith(monthPrefix)).forEach(r => {
+                const amt = getRecordAmounts(r);
+                monthTotalRM += amt.totalRM;
+                monthTotalRMB += amt.totalRMB;
+            });
+
+            const monthRevElem = document.getElementById('monthTotalRevenue');
+            if (monthRevElem) {
+                monthRevElem.innerText = `RM ${monthTotalRM.toFixed(2)} / RMB ${monthTotalRMB.toFixed(2)}`;
+            }
+
             const firstDay = new Date(year, month, 1).getDay();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
 
@@ -1186,6 +1204,7 @@
                 const dayDiv = document.createElement('div');
                 dayDiv.className = `calendar-day ${dateStr === todayStr ? 'today' : ''}`;
 
+                // 当且仅当 isEditMode 为 true 时，才在日期单元格下方显示“修改/添加”按钮
                 const editButtonHtml = isEditMode 
                     ? `<button class="btn-day-edit" onclick="openHistoryManagerModal('${dateStr}')">✏️ 修改/添加</button>`
                     : '';
