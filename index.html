@@ -608,7 +608,7 @@
                 </div>
                 <h3 id="calendarMonthTitle" style="color: var(--primary-color);">2026年 8月</h3>
                 
-                <!-- 【已调整位置】在历史日历控制栏右侧增加了月总收入显示 -->
+                <!-- 在历史日历控制栏右侧增加了月总收入显示 -->
                 <div style="display: flex; gap: 10px; align-items: center;">
                     <div class="stat-box" style="text-align: left; padding: 4px 10px;">
                         <div class="stat-label">当月总收入</div>
@@ -641,7 +641,10 @@
                     <canvas id="revenueChart"></canvas>
                 </div>
                 <div class="chart-box">
-                    <h4 style="text-align: center; margin-bottom: 10px; color: var(--text-light);">当天时间段分布图 (24小时分布)</h4>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h4 style="color: var(--text-light); margin: 0;">当天时间段分布图 (24小时分布)</h4>
+                        <input type="date" id="singleDayPicker" onchange="renderCharts()" style="padding: 4px 8px; font-size: 0.85rem;">
+                    </div>
                     <canvas id="timeChart"></canvas>
                 </div>
             </div>
@@ -1261,11 +1264,30 @@
                 options: { responsive: true, plugins: { legend: { display: false } } }
             });
 
-            const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
-            const monthRecords = allRecords.filter(r => r.date && r.date.startsWith(monthPrefix));
+            // 维护单日选择器
+            const singleDayPicker = document.getElementById('singleDayPicker');
+            const todayStr = new Date().toISOString().split('T')[0];
+            const currentCalendarMonthStr = `${year}-${String(month + 1).padStart(2, '0')}`;
+            
+            if (!singleDayPicker.value) {
+                if (todayStr.startsWith(currentCalendarMonthStr)) {
+                    singleDayPicker.value = todayStr;
+                } else {
+                    singleDayPicker.value = `${currentCalendarMonthStr}-01`;
+                }
+            } else if (!singleDayPicker.value.startsWith(currentCalendarMonthStr)) {
+                if (todayStr.startsWith(currentCalendarMonthStr)) {
+                    singleDayPicker.value = todayStr;
+                } else {
+                    singleDayPicker.value = `${currentCalendarMonthStr}-01`;
+                }
+            }
+
+            const targetDateStr = singleDayPicker.value;
+            const singleDayRecords = allRecords.filter(r => r.date === targetDateStr);
 
             const hourlyRevenue = new Array(24).fill(0);
-            monthRecords.forEach(r => {
+            singleDayRecords.forEach(r => {
                 if (r.time) {
                     const hour = parseInt(r.time.split(':')[0], 10);
                     if (!isNaN(hour) && hour >= 0 && hour < 24) {
