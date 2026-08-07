@@ -6,7 +6,6 @@
     <title>门票收银与数据管理系统</title>
     <!-- 引入 Chart.js 用于图表绘制 -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <style>
         /* 复古纸张与木质暖色调主题 (Vintage / Retro Palette) */
         :root {
@@ -365,6 +364,7 @@
             text-align: right;
         }
 
+        /* 日历单元格底部的修改按键 */
         .btn-day-edit {
             background-color: #f0f0f0;
             color: var(--text-color);
@@ -477,6 +477,7 @@
         <div class="card-title">🎟️ 门票收款录入</div>
         
         <form id="ticketForm" onsubmit="handleFormSubmit(event)">
+            <!-- 门票与附加服务组合区域 -->
             <div class="ticket-box">
                 <label style="margin-bottom: 10px; display: block;">设置门票数量与价格：</label>
                 
@@ -541,6 +542,7 @@
             </div>
 
             <div class="form-grid">
+                <!-- 付款方式 -->
                 <div class="form-group">
                     <label>💳 付款方式：</label>
                     <select id="paymentMethod" required>
@@ -552,6 +554,7 @@
                 </div>
             </div>
 
+            <!-- 底部汇总提交 -->
             <div class="summary-bar">
                 <div>
                     <span>总人数：<b id="formTotalCount">0</b> 人 | </span>
@@ -596,14 +599,16 @@
 
     <!-- 视图 2：历史日历与图表视图 -->
     <div id="historyView" style="display: none;">
+        <!-- 日历卡片 -->
         <div class="card">
             <div class="calendar-controls">
                 <div>
                     <button class="btn btn-secondary" onclick="changeMonth(-1)">◀ 上个月</button>
                     <button class="btn btn-secondary" onclick="changeMonth(1)" style="margin-left: 5px;">下个月 ▶</button>
                 </div>
-                <h3 id="calendarMonthTitle" style="color: var(--primary-color);">----年 --月</h3>
+                <h3 id="calendarMonthTitle" style="color: var(--primary-color);">2026年 8月</h3>
                 
+                <!-- 【已调整位置】修改按钮放置在历史日历控制栏右侧 -->
                 <div>
                     <button class="btn btn-edit" id="toggleEditModeBtn" onclick="toggleEditMode()">✏️ 修改</button>
                 </div>
@@ -623,11 +628,12 @@
             </div>
         </div>
 
+        <!-- 数据可视化图表区域 -->
         <div class="card">
             <div class="card-title">📊 本月数据可视化分析</div>
             <div class="charts-container">
                 <div class="chart-box">
-                    <h4 style="text-align: center; margin-bottom: 10px; color: var(--text-light);">每日收益趋势 (RM/RMB)</h4>
+                    <h4 style="text-align: center; margin-bottom: 10px; color: var(--text-light);">每日收益趋势 (RMB 换算总计)</h4>
                     <canvas id="revenueChart"></canvas>
                 </div>
                 <div class="chart-box">
@@ -638,7 +644,7 @@
         </div>
     </div>
 
-    <!-- 弹窗：历史记录管理 -->
+    <!-- 弹窗：指定日期的历史记录管理弹窗 -->
     <div class="modal" id="historyManagerModal">
         <div class="modal-content">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-bottom: 15px;">
@@ -648,11 +654,13 @@
 
             <input type="hidden" id="historyFilterDate">
 
+            <!-- 操作头部 -->
             <div style="background: #fcf6ed; padding: 12px; border-radius: 6px; border: 1px dashed var(--border-color); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
                 <span id="currentSelectedDateLabel" style="font-weight: bold; color: var(--primary-color);">当前日期: ----</span>
                 <button class="btn" onclick="openEditFormForNew()"><span style="font-size:1.1rem;">＋</span> 补充该日记录</button>
             </div>
 
+            <!-- 数据展示容器 -->
             <div id="historyListContainer">
                 <!-- 动态渲染该日期下的明细列表 -->
             </div>
@@ -714,43 +722,12 @@
         let allRecords = [];
         let currentTab = 'today';
         let calendarDate = new Date();
-        let isEditMode = false;
+        let isEditMode = false; // 控制是否开启编辑模式状态
 
         let revenueChartInstance = null;
         let timeChartInstance = null;
 
-        // 初始化加载数据
-        window.addEventListener('DOMContentLoaded', () => {
-            loadRecords();
-            updateClock();
-            setInterval(updateClock, 1000);
-            calculateFormTotal();
-        });
-
-        function loadRecords() {
-            const saved = localStorage.getItem('ticket_records');
-            if (saved) {
-                try {
-                    allRecords = JSON.parse(saved);
-                } catch (e) {
-                    allRecords = [];
-                }
-            }
-            renderTable();
-            updateTodayStats();
-        }
-
-        function saveRecords() {
-            localStorage.setItem('ticket_records', JSON.stringify(allRecords));
-            renderTable();
-            updateTodayStats();
-            if (currentTab === 'history') {
-                renderCalendar();
-                renderCharts();
-            }
-        }
-
-        // 时钟刷新
+        // 初始化时间
         function updateClock() {
             const now = new Date();
             const year = now.getFullYear();
@@ -763,7 +740,10 @@
             document.getElementById('currentDate').innerText = `${year}年${month}月${day}日`;
             document.getElementById('currentTime').innerText = `${hours}:${minutes}:${seconds}`;
         }
+        setInterval(updateClock, 1000);
+        updateClock();
 
+        // 切换修改模式开关（位于历史日历右侧）
         function toggleEditMode() {
             isEditMode = !isEditMode;
             const btn = document.getElementById('toggleEditModeBtn');
@@ -774,7 +754,7 @@
                 btn.innerText = '✏️ 修改';
                 btn.style.backgroundColor = 'var(--edit-color)';
             }
-            renderCalendar();
+            renderCalendar(); // 重新渲染日历（控制显示/隐藏日期单元格下的“修改/添加”按键）
         }
 
         function toggleCustomQty(selectId, inputId) {
@@ -793,10 +773,10 @@
         // 计算表单实时总价与人数
         function getTicketValues() {
             let adultQtySelect = document.getElementById('adultQtySelect').value;
-            let adultQty = adultQtySelect === 'custom' ? parseInt(document.getElementById('adultCustomQty').value || 0) : parseInt(adultQtySelect || 0);
+            let adultQty = adultQtySelect === 'custom' ? parseInt(document.getElementById('adultCustomQty').value || 0) : parseInt(adultQtySelect);
 
             let childQtySelect = document.getElementById('childQtySelect').value;
-            let childQty = childQtySelect === 'custom' ? parseInt(document.getElementById('childCustomQty').value || 0) : parseInt(childQtySelect || 0);
+            let childQty = childQtySelect === 'custom' ? parseInt(document.getElementById('childCustomQty').value || 0) : parseInt(childQtySelect);
 
             let hasGuide = document.getElementById('guideServiceCheck').checked;
 
@@ -839,7 +819,7 @@
         });
 
         // 提交新增数据
-        function handleFormSubmit(e) {
+        async function handleFormSubmit(e) {
             e.preventDefault();
             const ticketData = getTicketValues();
 
@@ -865,246 +845,138 @@
                 childCount: ticketData.childQty,
                 hasGuide: ticketData.hasGuide,
                 totalCount: ticketData.totalCount,
-                details: ticketData.details,
                 paymentMethod: document.getElementById('paymentMethod').value,
-                displayPrice: displayPriceStr,
+                totalPrice: ticketData.totalPriceRM,
                 totalPriceRM: ticketData.totalPriceRM,
-                totalPriceRMB: ticketData.totalPriceRMB
+                totalPriceRMB: ticketData.totalPriceRMB,
+                convertedRMB: ticketData.totalPriceRMB,
+                displayPrice: displayPriceStr,
+                details: ticketData.details
             };
 
-            allRecords.push(payload);
-            saveRecords();
-
-            // 重置表单
-            document.getElementById('ticketForm').reset();
-            document.getElementById('adultCustomQty').style.display = 'none';
-            document.getElementById('childCustomQty').style.display = 'none';
-            calculateFormTotal();
-            alert('录入成功！');
-        }
-
-        // 得到今天的日期字符串 YYYY-MM-DD
-        function getTodayDateStr() {
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        }
-
-        // 渲染今日表格数据
-        function renderTable() {
-            const tbody = document.getElementById('recordsTableBody');
-            tbody.innerHTML = '';
-
-            const todayStr = getTodayDateStr();
-            const todayRecords = allRecords.filter(r => r.date === todayStr);
-
-            if (todayRecords.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color: var(--text-light);">今日暂无记录</td></tr>`;
-                return;
-            }
-
-            todayRecords.slice().reverse().forEach(record => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${record.time}</td>
-                    <td><b>${record.totalCount}</b> 人</td>
-                    <td>${record.details || '-'}</td>
-                    <td>${record.paymentMethod}</td>
-                    <td style="color: var(--primary-color); font-weight: bold;">${record.displayPrice}</td>
-                    <td class="no-print">
-                        <button class="btn btn-edit" onclick="openEditModalForId('${record.id}')">编辑</button>
-                        <button class="btn btn-danger" onclick="deleteRecord('${record.id}')">删除</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        // 刷新顶部统计数字
-        function updateTodayStats() {
-            const todayStr = getTodayDateStr();
-            const todayRecords = allRecords.filter(r => r.date === todayStr);
-
-            let totalGuests = 0;
-            let totalRM = 0;
-            let totalRMB = 0;
-
-            todayRecords.forEach(r => {
-                totalGuests += Number(r.totalCount || 0);
-                totalRM += Number(r.totalPriceRM || 0);
-                totalRMB += Number(r.totalPriceRMB || 0);
-            });
-
-            document.getElementById('headerTotalGuests').innerText = `${totalGuests} 人`;
-            document.getElementById('headerTotalRevenue').innerText = `RM ${totalRM.toFixed(2)} / RMB ${totalRMB.toFixed(2)}`;
-        }
-
-        // 选项卡切换
-        function switchTab(tab) {
-            currentTab = tab;
-            if (tab === 'today') {
-                document.getElementById('todayView').style.display = 'block';
-                document.getElementById('historyView').style.display = 'none';
-                document.getElementById('tabToday').classList.add('active');
-                document.getElementById('tabHistory').classList.remove('active');
-            } else {
-                document.getElementById('todayView').style.display = 'none';
-                document.getElementById('historyView').style.display = 'block';
-                document.getElementById('tabToday').classList.remove('active');
-                document.getElementById('tabHistory').classList.add('active');
-                renderCalendar();
-                renderCharts();
-            }
-        }
-
-        // 渲染日历
-        function renderCalendar() {
-            const year = calendarDate.getFullYear();
-            const month = calendarDate.getMonth();
-            document.getElementById('calendarMonthTitle').innerText = `${year}年 ${month + 1}月`;
-
-            const firstDayIndex = new Date(year, month, 1).getDay();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-            const calendarDays = document.getElementById('calendarDays');
-            calendarDays.innerHTML = '';
-
-            for (let i = 0; i < firstDayIndex; i++) {
-                const emptyDiv = document.createElement('div');
-                emptyDiv.className = 'calendar-day empty';
-                calendarDays.appendChild(emptyDiv);
-            }
-
-            const todayStr = getTodayDateStr();
-
-            for (let day = 1; day <= daysInMonth; day++) {
-                const dayStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                const dayRecords = allRecords.filter(r => r.date === dayStr);
-
-                let dayGuests = 0;
-                let dayRM = 0;
-                let dayRMB = 0;
-                dayRecords.forEach(r => {
-                    dayGuests += Number(r.totalCount || 0);
-                    dayRM += Number(r.totalPriceRM || 0);
-                    dayRMB += Number(r.totalPriceRMB || 0);
+            try {
+                const res = await fetch('/api/records', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
                 });
 
-                const dayDiv = document.createElement('div');
-                dayDiv.className = 'calendar-day';
-                if (dayStr === todayStr) dayDiv.classList.add('today');
-
-                let contentHtml = `
-                    <div class="day-num">${day}</div>
-                    <div>
-                        <div class="day-revenue">RM ${dayRM}</div>
-                        <div class="day-revenue">RMB ${dayRMB}</div>
-                        <div class="day-guests">${dayGuests} 人</div>
-                    </div>
-                `;
-
-                if (isEditMode) {
-                    contentHtml += `<button class="btn-day-edit" onclick="openHistoryManagerModal('${dayStr}')">管理</button>`;
+                if (res.ok) {
+                    document.getElementById('ticketForm').reset();
+                    document.getElementById('adultCustomQty').style.display = 'none';
+                    document.getElementById('childCustomQty').style.display = 'none';
+                    calculateFormTotal();
+                    fetchRecords();
                 } else {
-                    dayDiv.onclick = () => openHistoryManagerModal(dayStr);
-                    dayDiv.style.cursor = 'pointer';
+                    alert('提交失败，请重试');
                 }
-
-                dayDiv.innerHTML = contentHtml;
-                calendarDays.appendChild(dayDiv);
+            } catch (err) {
+                alert('网络连接失败，请检查服务器是否正常运行');
             }
         }
 
-        function changeMonth(delta) {
-            calendarDate.setMonth(calendarDate.getMonth() + delta);
-            renderCalendar();
-            renderCharts();
+        async function deleteRecord(id) {
+            if (!confirm("确定要删除这条记录吗？此操作无法撤销。")) return;
+
+            try {
+                const res = await fetch(`/api/records/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    await fetchRecords();
+                    loadHistoryListForDate();
+                } else {
+                    alert('删除失败');
+                }
+            } catch (e) {
+                alert('网络错误，删除失败');
+            }
         }
 
-        // 打开历史数据管理弹窗
+        /* ---------------- 管理历史弹窗逻辑 ---------------- */
+
         function openHistoryManagerModal(dateStr) {
             document.getElementById('historyFilterDate').value = dateStr;
-            document.getElementById('currentSelectedDateLabel').innerText = `当前日期: ${dateStr}`;
-            
-            const listContainer = document.getElementById('historyListContainer');
-            listContainer.innerHTML = '';
-
-            const dayRecords = allRecords.filter(r => r.date === dateStr);
-
-            if (dayRecords.length === 0) {
-                listContainer.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-light);">该日期无交易记录</div>`;
-            } else {
-                dayRecords.forEach(r => {
-                    const item = document.createElement('div');
-                    item.className = 'history-list-item';
-                    item.innerHTML = `
-                        <div class="history-list-info">
-                            <div><b>时间：</b>${r.time} | <b>人数：</b>${r.totalCount}人</div>
-                            <div style="font-size:0.85rem; color:var(--text-light);">明细：${r.details || '-'} (${r.paymentMethod})</div>
-                            <div style="color:var(--primary-color); font-weight:bold;">${r.displayPrice}</div>
-                        </div>
-                        <div>
-                            <button class="btn btn-edit" onclick="openEditModalForId('${r.id}')">修改</button>
-                            <button class="btn btn-danger" onclick="deleteRecord('${r.id}')">删除</button>
-                        </div>
-                    `;
-                    listContainer.appendChild(item);
-                });
-            }
-
+            document.getElementById('historyModalTitle').innerText = `📅 ${dateStr} 记录管理`;
+            document.getElementById('currentSelectedDateLabel').innerText = `当前选中日期：${dateStr}`;
             document.getElementById('historyManagerModal').style.display = 'flex';
+            loadHistoryListForDate();
         }
 
         function closeHistoryManagerModal() {
             document.getElementById('historyManagerModal').style.display = 'none';
         }
 
-        // 删除记录
-        function deleteRecord(id) {
-            if (confirm('确认删除该条记录吗？')) {
-                allRecords = allRecords.filter(r => r.id !== id);
-                saveRecords();
+        function loadHistoryListForDate() {
+            const selectedDate = document.getElementById('historyFilterDate').value;
+            const container = document.getElementById('historyListContainer');
 
-                const filterDate = document.getElementById('historyFilterDate').value;
-                if (filterDate) openHistoryManagerModal(filterDate);
+            const dayRecords = allRecords.filter(r => r.date === selectedDate);
+
+            if (dayRecords.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 30px; background: #fff; border-radius: 6px; border: 1px solid var(--border-color);">
+                        <p style="color: var(--text-light); margin-bottom: 10px;">📅 <b>${selectedDate}</b> 暂无任何门票数据</p>
+                        <button class="btn btn-edit" onclick="openEditFormForNew()">➕ 立即在该日期添加一条记录</button>
+                    </div>
+                `;
+                return;
             }
+
+            let html = `<p style="margin-bottom: 10px; font-weight: bold; color: var(--text-light);">📅 ${selectedDate} 共找到 ${dayRecords.length} 条记录：</p>`;
+            
+            dayRecords.forEach((r) => {
+                const amt = getRecordAmounts(r);
+                let priceText = r.displayPrice || `RM${amt.totalRM} / RMB${amt.totalRMB}`;
+
+                html += `
+                    <div class="history-list-item">
+                        <div class="history-list-info">
+                            <div><b>时间：</b>${r.time || '未记时间'} | <b>人数：</b>${r.totalCount || 0}人 (${r.details || '-'})</div>
+                            <div style="font-size: 0.85rem; color: var(--text-light);"><b>付款：</b>${r.paymentMethod} | <b style="color: var(--primary-color);">${priceText}</b></div>
+                        </div>
+                        <div style="display: flex; gap: 6px;">
+                            <button class="btn btn-edit" onclick="openEditFormForExist('${r.id}')">修改</button>
+                            <button class="btn btn-danger" onclick="deleteRecord('${r.id}')">删除</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
         }
 
-        // 编辑弹窗处理
-        function openEditModalForId(id) {
-            const record = allRecords.find(r => r.id === id);
+        /* ---------------- 添加/编辑子弹窗逻辑 ---------------- */
+
+        function openEditFormForExist(id) {
+            const record = allRecords.find(r => r.id == id);
             if (!record) return;
 
+            document.getElementById('editFormHeaderTitle').innerText = '✏️ 修改售票记录';
             document.getElementById('editRecordId').value = record.id;
             document.getElementById('editRecordDate').value = record.date;
-            document.getElementById('editRecordTime').value = record.time;
+            document.getElementById('editRecordTime').value = record.time || '12:00:00';
             document.getElementById('editAdultCount').value = record.adultCount || 0;
             document.getElementById('editChildCount').value = record.childCount || 0;
             document.getElementById('editGuideCheck').checked = !!record.hasGuide;
             document.getElementById('editPaymentMethod').value = record.paymentMethod;
-            document.getElementById('editTotalPrice').value = record.displayPrice;
+            document.getElementById('editTotalPrice').value = record.displayPrice || `RM${record.totalPrice}`;
 
-            document.getElementById('editFormHeaderTitle').innerText = '✏️ 修改售票记录';
             document.getElementById('editFormModal').style.display = 'flex';
         }
 
         function openEditFormForNew() {
-            const selectedDate = document.getElementById('historyFilterDate').value || getTodayDateStr();
-            const now = new Date();
-            const timeStr = now.toTimeString().split(' ')[0];
+            const date = document.getElementById('historyFilterDate').value || new Date().toISOString().split('T')[0];
+            const nowTime = new Date().toTimeString().split(' ')[0];
 
+            document.getElementById('editFormHeaderTitle').innerText = `➕ 补充数据 (${date})`;
             document.getElementById('editRecordId').value = '';
-            document.getElementById('editRecordDate').value = selectedDate;
-            document.getElementById('editRecordTime').value = timeStr;
-            document.getElementById('editAdultCount').value = 0;
+            document.getElementById('editRecordDate').value = date;
+            document.getElementById('editRecordTime').value = nowTime;
+            document.getElementById('editAdultCount').value = 1;
             document.getElementById('editChildCount').value = 0;
             document.getElementById('editGuideCheck').checked = false;
             document.getElementById('editPaymentMethod').value = '现金';
-            document.getElementById('editTotalPrice').value = 'RM0 / RMB0';
+            calculateEditTotal();
 
-            document.getElementById('editFormHeaderTitle').innerText = '＋ 补充历史售票记录';
             document.getElementById('editFormModal').style.display = 'flex';
         }
 
@@ -1117,18 +989,12 @@
             const child = parseInt(document.getElementById('editChildCount').value || 0);
             const hasGuide = document.getElementById('editGuideCheck').checked;
 
-            let rm = (adult * 35) + (child * 20);
-            let rmb = (adult * 60) + (child * 35);
-
-            if (hasGuide) {
-                rm += 30;
-                rmb += 50;
-            }
-
-            document.getElementById('editTotalPrice').value = `RM${rm} / RMB${rmb}`;
+            let estimatedRM = (adult * 35) + (child * 20) + (hasGuide ? 30 : 0);
+            let estimatedRMB = (adult * 60) + (child * 35) + (hasGuide ? 50 : 0);
+            document.getElementById('editTotalPrice').value = `RM${estimatedRM} / RMB${estimatedRMB}`;
         }
 
-        function saveEditRecord(e) {
+        async function saveEditRecord(e) {
             e.preventDefault();
             const id = document.getElementById('editRecordId').value;
             const date = document.getElementById('editRecordDate').value;
@@ -1136,119 +1002,304 @@
             const adultCount = parseInt(document.getElementById('editAdultCount').value || 0);
             const childCount = parseInt(document.getElementById('editChildCount').value || 0);
             const hasGuide = document.getElementById('editGuideCheck').checked;
+            const priceInput = document.getElementById('editTotalPrice').value;
             const paymentMethod = document.getElementById('editPaymentMethod').value;
-            const displayPrice = document.getElementById('editTotalPrice').value;
-
-            const totalCount = adultCount + childCount;
-
-            let rm = (adultCount * 35) + (childCount * 20) + (hasGuide ? 30 : 0);
-            let rmb = (adultCount * 60) + (childCount * 35) + (hasGuide ? 50 : 0);
 
             let detailsArr = [];
             if (adultCount > 0) detailsArr.push(`成人票 x${adultCount}`);
             if (childCount > 0) detailsArr.push(`儿童票 x${childCount}`);
             if (hasGuide) detailsArr.push(`导览服务`);
 
-            if (id) {
-                // 编辑现有
-                const idx = allRecords.findIndex(r => r.id === id);
-                if (idx !== -1) {
-                    allRecords[idx] = {
-                        ...allRecords[idx],
-                        date, time, adultCount, childCount, hasGuide,
-                        totalCount, details: detailsArr.join(', ') || '无门票',
-                        paymentMethod, displayPrice,
-                        totalPriceRM: rm, totalPriceRMB: rmb
-                    };
-                }
-            } else {
-                // 新建补充
-                allRecords.push({
-                    id: Date.now().toString(),
-                    date, time, adultCount, childCount, hasGuide,
-                    totalCount, details: detailsArr.join(', ') || '无门票',
-                    paymentMethod, displayPrice,
-                    totalPriceRM: rm, totalPriceRMB: rmb
+            let calcRM = (adultCount * 35) + (childCount * 20) + (hasGuide ? 30 : 0);
+            let calcRMB = (adultCount * 60) + (childCount * 35) + (hasGuide ? 50 : 0);
+
+            const payload = {
+                date,
+                time,
+                adultCount,
+                childCount,
+                hasGuide,
+                totalCount: adultCount + childCount,
+                totalPrice: calcRM,
+                totalPriceRM: calcRM,
+                totalPriceRMB: calcRMB,
+                convertedRMB: calcRMB,
+                displayPrice: priceInput,
+                paymentMethod,
+                details: detailsArr.join(', ') || '历史调整/补充'
+            };
+
+            try {
+                let url = id ? `/api/records/${id}` : '/api/records';
+                let method = id ? 'PUT' : 'POST';
+
+                if (!id) payload.id = Date.now().toString();
+
+                const res = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
                 });
+
+                if (res.ok) {
+                    closeEditFormModal();
+                    await fetchRecords();
+                    loadHistoryListForDate();
+                } else {
+                    alert('保存失败');
+                }
+            } catch (e) {
+                alert('网络错误，保存失败');
             }
-
-            saveRecords();
-            closeEditFormModal();
-
-            const filterDate = document.getElementById('historyFilterDate').value;
-            if (filterDate) openHistoryManagerModal(filterDate);
         }
 
-        // 图表渲染
+        /* ---------------- 数据拉取与渲染 ---------------- */
+
+        async function fetchRecords() {
+            try {
+                const res = await fetch('/api/records');
+                allRecords = await res.json();
+                renderUI();
+            } catch (e) {
+                console.error("数据拉取失败", e);
+            }
+        }
+
+        function getRecordAmounts(r) {
+            let adultQty = r.adultCount || 0;
+            let childQty = r.childCount || 0;
+            let hasGuide = !!r.hasGuide;
+
+            let totalRM = (adultQty * 35) + (childQty * 20) + (hasGuide ? 30 : 0);
+            let totalRMB = (adultQty * 60) + (childQty * 35) + (hasGuide ? 50 : 0);
+
+            if (totalRM === 0 && (r.totalPriceRM || r.totalPrice)) {
+                totalRM = r.totalPriceRM || r.totalPrice || 0;
+                totalRMB = r.totalPriceRMB || r.convertedRMB || 0;
+            }
+
+            return { totalRM, totalRMB };
+        }
+
+        function renderUI() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const todayStr = `${year}-${month}-${day}`;
+
+            let todayGuests = 0;
+            let todayTotalRM = 0;
+            let todayTotalRMB = 0;
+
+            const todayRecords = allRecords.filter(r => r.date === todayStr);
+            todayRecords.forEach(r => {
+                todayGuests += (r.totalCount || 0);
+                const amt = getRecordAmounts(r);
+                todayTotalRM += amt.totalRM;
+                todayTotalRMB += amt.totalRMB;
+            });
+
+            document.getElementById('headerTotalGuests').innerText = `${todayGuests} 人`;
+            document.getElementById('headerTotalRevenue').innerText = `RM ${todayTotalRM.toFixed(2)} / RMB ${todayTotalRMB.toFixed(2)}`;
+
+            if (currentTab === 'today') {
+                renderTodayTable(todayRecords);
+            } else {
+                renderCalendar();
+                renderCharts();
+            }
+        }
+
+        function renderTodayTable(todayRecords) {
+            const tbody = document.getElementById('recordsTableBody');
+            tbody.innerHTML = '';
+
+            if (todayRecords.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="color: var(--text-light); padding: 20px;">今日暂无记录</td></tr>`;
+                return;
+            }
+
+            [...todayRecords].reverse().forEach(r => {
+                const tr = document.createElement('tr');
+                const amt = getRecordAmounts(r);
+                let priceText = r.displayPrice || `RM${amt.totalRM} / RMB${amt.totalRMB}`;
+                
+                tr.innerHTML = `
+                    <td>${r.date} ${r.time}</td>
+                    <td><b>${r.totalCount}</b> 人</td>
+                    <td>${r.details || '-'}</td>
+                    <td>${r.paymentMethod}</td>
+                    <td><b style="color: var(--primary-color);">${priceText}</b></td>
+                    <td class="no-print">
+                        <button class="btn btn-edit" onclick="openEditFormForExist('${r.id}')">修改</button>
+                        <button class="btn btn-danger" onclick="deleteRecord('${r.id}')">删除</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function changeMonth(delta) {
+            calendarDate.setMonth(calendarDate.getMonth() + delta);
+            renderCalendar();
+            renderCharts();
+        }
+
+        function renderCalendar() {
+            const year = calendarDate.getFullYear();
+            const month = calendarDate.getMonth();
+            
+            document.getElementById('calendarMonthTitle').innerText = `${year}年 ${month + 1}月`;
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            const container = document.getElementById('calendarDays');
+            container.innerHTML = '';
+
+            for (let i = 0; i < firstDay; i++) {
+                const emptyDiv = document.createElement('div');
+                emptyDiv.className = 'calendar-day empty';
+                container.appendChild(emptyDiv);
+            }
+
+            const todayStr = new Date().toISOString().split('T')[0];
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                
+                const dayRecords = allRecords.filter(r => r.date === dateStr);
+                let dayTotalRM = 0;
+                let dayTotalRMB = 0;
+                let dayGuests = 0;
+
+                dayRecords.forEach(r => {
+                    const amt = getRecordAmounts(r);
+                    dayTotalRM += amt.totalRM;
+                    dayTotalRMB += amt.totalRMB;
+                    dayGuests += (r.totalCount || 0);
+                });
+
+                const dayDiv = document.createElement('div');
+                dayDiv.className = `calendar-day ${dateStr === todayStr ? 'today' : ''}`;
+
+                // 当且仅当 isEditMode 为 true 时，才在日期单元格下方显示“修改/添加”按钮
+                const editButtonHtml = isEditMode 
+                    ? `<button class="btn-day-edit" onclick="openHistoryManagerModal('${dateStr}')">✏️ 修改/添加</button>`
+                    : '';
+
+                dayDiv.innerHTML = `
+                    <div class="day-num">${day}</div>
+                    ${dayRecords.length > 0 ? `
+                        <div>
+                            <div class="day-revenue">RM ${dayTotalRM.toFixed(0)}</div>
+                            <div class="day-revenue">RMB ${dayTotalRMB.toFixed(0)}</div>
+                            <div class="day-guests">${dayGuests}人</div>
+                        </div>
+                    ` : '<div></div>'}
+                    ${editButtonHtml}
+                `;
+                container.appendChild(dayDiv);
+            }
+        }
+
         function renderCharts() {
             const year = calendarDate.getFullYear();
             const month = calendarDate.getMonth();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
 
             const labels = [];
-            const revenueDataRM = [];
-            const revenueDataRMB = [];
+            const revenueData = [];
 
-            for (let day = 1; day <= daysInMonth; day++) {
-                labels.push(`${day}日`);
-                const dayStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                const dayRecords = allRecords.filter(r => r.date === dayStr);
-
-                let dayRM = 0, dayRMB = 0;
-                dayRecords.forEach(r => {
-                    dayRM += Number(r.totalPriceRM || 0);
-                    dayRMB += Number(r.totalPriceRMB || 0);
-                });
-
-                revenueDataRM.push(dayRM);
-                revenueDataRMB.push(dayRMB);
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                labels.push(`${d}日`);
+                
+                const dayTotalConverted = allRecords
+                    .filter(r => r.date === dateStr)
+                    .reduce((sum, r) => sum + getRecordAmounts(r).totalRMB, 0);
+                revenueData.push(dayTotalConverted);
             }
 
-            // 渲染收益趋势图
-            const ctxRev = document.getElementById('revenueChart').getContext('2d');
             if (revenueChartInstance) revenueChartInstance.destroy();
 
-            revenueChartInstance = new Chart(ctxRev, {
+            const ctx1 = document.getElementById('revenueChart').getContext('2d');
+            revenueChartInstance = new Chart(ctx1, {
                 type: 'line',
                 data: {
                     labels: labels,
-                    datasets: [
-                        { label: 'RM 收入', data: revenueDataRM, borderColor: '#8c2d19', backgroundColor: 'rgba(140,45,25,0.1)', fill: true },
-                        { label: 'RMB 收入', data: revenueDataRMB, borderColor: '#d99b26', backgroundColor: 'rgba(217,155,38,0.1)', fill: true }
-                    ]
+                    datasets: [{
+                        label: '每日收益 (RMB 总计)',
+                        data: revenueData,
+                        borderColor: '#8c2d19',
+                        backgroundColor: 'rgba(140, 45, 25, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
                 },
-                options: { responsive: true, maintainAspectRatio: false }
+                options: { responsive: true, plugins: { legend: { display: false } } }
             });
 
-            // 渲染时间段分布图 (24小时分布)
-            const hoursArr = Array.from({ length: 24 }, (_, i) => `${i}:00`);
-            const timeDist = new Array(24).fill(0);
+            const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
+            const monthRecords = allRecords.filter(r => r.date && r.date.startsWith(monthPrefix));
 
-            allRecords.forEach(r => {
+            const hourlyRevenue = new Array(24).fill(0);
+            monthRecords.forEach(r => {
                 if (r.time) {
-                    const h = parseInt(r.time.split(':')[0]);
-                    if (!isNaN(h) && h >= 0 && h < 24) {
-                        timeDist[h] += Number(r.totalCount || 1);
+                    const hour = parseInt(r.time.split(':')[0], 10);
+                    if (!isNaN(hour) && hour >= 0 && hour < 24) {
+                        hourlyRevenue[hour] += getRecordAmounts(r).totalRMB;
                     }
                 }
             });
 
-            const ctxTime = document.getElementById('timeChart').getContext('2d');
+            const timeLabels = ['00:00', '02:00', '04:00', '06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'];
+            const timeData = [];
+
+            for (let i = 0; i < 24; i += 2) {
+                const intervalRevenue = hourlyRevenue[i] + hourlyRevenue[i + 1];
+                timeData.push(intervalRevenue);
+            }
+
             if (timeChartInstance) timeChartInstance.destroy();
 
-            timeChartInstance = new Chart(ctxTime, {
+            const ctx2 = document.getElementById('timeChart').getContext('2d');
+            timeChartInstance = new Chart(ctx2, {
                 type: 'bar',
                 data: {
-                    labels: hoursArr,
+                    labels: timeLabels,
                     datasets: [{
-                        label: '入园人数分布',
-                        data: timeDist,
-                        backgroundColor: '#8c2d19'
+                        label: '时段收益 (RMB)',
+                        data: timeData,
+                        backgroundColor: '#d99b26',
+                        borderRadius: 4
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false }
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { title: { display: true, text: '时间段 (12个显示点)' } },
+                        y: { title: { display: true, text: '收益 (RMB)' } }
+                    }
+                }
             });
         }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.getElementById('tabToday').classList.toggle('active', tab === 'today');
+            document.getElementById('tabHistory').classList.toggle('active', tab === 'history');
+            
+            document.getElementById('todayView').style.display = tab === 'today' ? 'block' : 'none';
+            document.getElementById('historyView').style.display = tab === 'history' ? 'block' : 'none';
+
+            renderUI();
+        }
+
+        setInterval(fetchRecords, 5000);
+        fetchRecords();
     </script>
 </body>
 </html>
