@@ -71,8 +71,8 @@
 
         .header-right {
             display: flex;
-            gap: 20px;
-            text-align: right;
+            gap: 15px;
+            align-items: center;
         }
 
         .stat-box {
@@ -80,6 +80,7 @@
             padding: 8px 15px;
             border-radius: 6px;
             border: 1px solid var(--border-color);
+            text-align: right;
         }
 
         .stat-label {
@@ -314,7 +315,7 @@
         }
 
         .calendar-day {
-            min-height: 95px;
+            min-height: 105px;
             background: #fff;
             border: 1px solid var(--border-color);
             border-radius: 6px;
@@ -322,19 +323,16 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            cursor: pointer;
             transition: transform 0.1s, box-shadow 0.1s;
         }
 
         .calendar-day:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.08);
         }
 
         .calendar-day.empty {
             background: transparent;
             border: none;
-            cursor: default;
         }
 
         .calendar-day.today {
@@ -349,21 +347,42 @@
         }
 
         .calendar-day .day-revenue {
-            font-size: 0.72rem;
+            font-size: 0.7rem;
             font-weight: bold;
             color: var(--primary-color);
             background-color: #fcf6ed;
-            padding: 2px 4px;
+            padding: 1px 3px;
             border-radius: 3px;
             text-align: right;
-            margin-top: 2px;
-            line-height: 1.2;
+            margin-top: 1px;
+            line-height: 1.1;
         }
 
         .calendar-day .day-guests {
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             color: var(--text-light);
             text-align: right;
+        }
+
+        /* 日历单元格底部的修改按键 */
+        .btn-day-edit {
+            background-color: #f0f0f0;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            font-size: 0.7rem;
+            padding: 2px 4px;
+            margin-top: 4px;
+            cursor: pointer;
+            width: 100%;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .btn-day-edit:hover {
+            background-color: var(--edit-color);
+            color: #fff;
+            border-color: var(--edit-color);
         }
 
         /* 图表布局 */
@@ -450,6 +469,8 @@
                 <div class="stat-label">今日总结算收入</div>
                 <div class="stat-value" id="headerTotalRevenue">RM 0.00 / RMB 0.00</div>
             </div>
+            <!-- 右上角控制栏修改按钮 -->
+            <button class="btn btn-edit" id="toggleEditModeBtn" onclick="toggleEditMode()">✏️ 修改/编辑模式</button>
         </div>
     </header>
 
@@ -588,8 +609,7 @@
                     <button class="btn btn-secondary" onclick="changeMonth(1)" style="margin-left: 5px;">下个月 ▶</button>
                 </div>
                 <h3 id="calendarMonthTitle" style="color: var(--primary-color);">2026年 8月</h3>
-                <!-- 右上角统一管理的按键 (保持原位置) -->
-                <button class="btn btn-edit" onclick="openHistoryManagerModal()">✏️ / ➕ 修改/添加历史记录</button>
+                <div></div>
             </div>
             
             <div class="calendar-grid">
@@ -622,21 +642,20 @@
         </div>
     </div>
 
-    <!-- 弹窗：历史记录查看与管理中心 -->
+    <!-- 弹窗：指定日期的历史记录管理弹窗 -->
     <div class="modal" id="historyManagerModal">
         <div class="modal-content">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-bottom: 15px;">
-                <h3 style="color: var(--primary-color);">📅 历史记录查看与修改</h3>
+                <h3 style="color: var(--primary-color);" id="historyModalTitle">📅 记录管理</h3>
                 <button class="btn btn-secondary" onclick="closeHistoryManagerModal()">关闭</button>
             </div>
 
-            <!-- 选日期区域 -->
+            <input type="hidden" id="historyFilterDate">
+
+            <!-- 操作头部 -->
             <div style="background: #fcf6ed; padding: 12px; border-radius: 6px; border: 1px dashed var(--border-color); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <label style="font-weight: bold;">选择目标日期：</label>
-                    <input type="date" id="historyFilterDate" onchange="loadHistoryListForDate()">
-                </div>
-                <button class="btn" onclick="openEditFormForNew()"><span style="font-size:1.1rem;">＋</span> 补充该日新记录</button>
+                <span id="currentSelectedDateLabel" style="font-weight: bold; color: var(--primary-color);">当前日期: ----</span>
+                <button class="btn" onclick="openEditFormForNew()"><span style="font-size:1.1rem;">＋</span> 补充该日记录</button>
             </div>
 
             <!-- 数据展示容器 -->
@@ -691,7 +710,7 @@
                 </div>
                 <div style="display: flex; justify-content: flex-end; gap: 10px;">
                     <button type="button" class="btn btn-secondary" onclick="closeEditFormModal()">返回列表</button>
-                    <button type="submit" class="btn">保存保存数据</button>
+                    <button type="submit" class="btn">保存数据</button>
                 </div>
             </form>
         </div>
@@ -701,6 +720,7 @@
         let allRecords = [];
         let currentTab = 'today';
         let calendarDate = new Date();
+        let isEditMode = false; // 控制是否开启编辑模式状态
 
         let revenueChartInstance = null;
         let timeChartInstance = null;
@@ -721,6 +741,20 @@
         setInterval(updateClock, 1000);
         updateClock();
 
+        // 切换修改模式开关（右上角控制栏按钮触发）
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            const btn = document.getElementById('toggleEditModeBtn');
+            if (isEditMode) {
+                btn.innerText = '✅ 退出编辑';
+                btn.style.backgroundColor = '#27ae60';
+            } else {
+                btn.innerText = '✏️ 修改/编辑模式';
+                btn.style.backgroundColor = 'var(--edit-color)';
+            }
+            renderCalendar(); // 重新渲染日历（显示或隐藏日期下方的修改按键）
+        }
+
         function toggleCustomQty(selectId, inputId) {
             const select = document.getElementById(selectId);
             const input = document.getElementById(inputId);
@@ -734,7 +768,7 @@
             calculateFormTotal();
         }
 
-        // 计算表单实时总价与人数（含导览选项：固定 RM30 = RMB50）
+        // 计算表单实时总价与人数
         function getTicketValues() {
             let adultQtySelect = document.getElementById('adultQtySelect').value;
             let adultQty = adultQtySelect === 'custom' ? parseInt(document.getElementById('adultCustomQty').value || 0) : parseInt(adultQtySelect);
@@ -846,7 +880,7 @@
                 const res = await fetch(`/api/records/${id}`, { method: 'DELETE' });
                 if (res.ok) {
                     await fetchRecords();
-                    loadHistoryListForDate(); // 刷新弹窗内的数据
+                    loadHistoryListForDate();
                 } else {
                     alert('删除失败');
                 }
@@ -857,10 +891,10 @@
 
         /* ---------------- 管理历史弹窗逻辑 ---------------- */
 
-        // 打开“历史记录修改/补充”弹窗
-        function openHistoryManagerModal(defaultDate = null) {
-            const todayStr = new Date().toISOString().split('T')[0];
-            document.getElementById('historyFilterDate').value = defaultDate || todayStr;
+        function openHistoryManagerModal(dateStr) {
+            document.getElementById('historyFilterDate').value = dateStr;
+            document.getElementById('historyModalTitle').innerText = `📅 ${dateStr} 记录管理`;
+            document.getElementById('currentSelectedDateLabel').innerText = `当前选中日期：${dateStr}`;
             document.getElementById('historyManagerModal').style.display = 'flex';
             loadHistoryListForDate();
         }
@@ -869,15 +903,9 @@
             document.getElementById('historyManagerModal').style.display = 'none';
         }
 
-        // 根据选定的日期在弹窗中展示明细数据列表
         function loadHistoryListForDate() {
             const selectedDate = document.getElementById('historyFilterDate').value;
             const container = document.getElementById('historyListContainer');
-
-            if (!selectedDate) {
-                container.innerHTML = '<p style="text-align:center; color: var(--text-light); padding:20px;">请选择日期</p>';
-                return;
-            }
 
             const dayRecords = allRecords.filter(r => r.date === selectedDate);
 
@@ -893,7 +921,7 @@
 
             let html = `<p style="margin-bottom: 10px; font-weight: bold; color: var(--text-light);">📅 ${selectedDate} 共找到 ${dayRecords.length} 条记录：</p>`;
             
-            dayRecords.forEach((r, idx) => {
+            dayRecords.forEach((r) => {
                 const amt = getRecordAmounts(r);
                 let priceText = r.displayPrice || `RM${amt.totalRM} / RMB${amt.totalRMB}`;
 
@@ -916,7 +944,6 @@
 
         /* ---------------- 添加/编辑子弹窗逻辑 ---------------- */
 
-        // 打开编辑已有数据的表单
         function openEditFormForExist(id) {
             const record = allRecords.find(r => r.id == id);
             if (!record) return;
@@ -934,13 +961,12 @@
             document.getElementById('editFormModal').style.display = 'flex';
         }
 
-        // 打开添加新数据的表单
         function openEditFormForNew() {
             const date = document.getElementById('historyFilterDate').value || new Date().toISOString().split('T')[0];
             const nowTime = new Date().toTimeString().split(' ')[0];
 
-            document.getElementById('editFormHeaderTitle').innerText = `➕ 补录历史数据 (${date})`;
-            document.getElementById('editRecordId').value = ''; // 空ID代表新建
+            document.getElementById('editFormHeaderTitle').innerText = `➕ 补充数据 (${date})`;
+            document.getElementById('editRecordId').value = '';
             document.getElementById('editRecordDate').value = date;
             document.getElementById('editRecordTime').value = nowTime;
             document.getElementById('editAdultCount').value = 1;
@@ -966,7 +992,6 @@
             document.getElementById('editTotalPrice').value = `RM${estimatedRM} / RMB${estimatedRMB}`;
         }
 
-        // 保存新增或修改的数据
         async function saveEditRecord(e) {
             e.preventDefault();
             const id = document.getElementById('editRecordId').value;
@@ -1017,7 +1042,7 @@
                 if (res.ok) {
                     closeEditFormModal();
                     await fetchRecords();
-                    loadHistoryListForDate(); // 重新加载列表数据
+                    loadHistoryListForDate();
                 } else {
                     alert('保存失败');
                 }
@@ -1156,8 +1181,11 @@
 
                 const dayDiv = document.createElement('div');
                 dayDiv.className = `calendar-day ${dateStr === todayStr ? 'today' : ''}`;
-                // 点击日历格子，直接以该日期打开历史记录弹窗
-                dayDiv.onclick = () => openHistoryManagerModal(dateStr);
+
+                // 仅仅当 isEditMode 为 true 时，才在日期单元格下方渲染修改/添加按钮
+                const editButtonHtml = isEditMode 
+                    ? `<button class="btn-day-edit" onclick="openHistoryManagerModal('${dateStr}')">✏️ 修改/添加</button>`
+                    : '';
 
                 dayDiv.innerHTML = `
                     <div class="day-num">${day}</div>
@@ -1167,7 +1195,8 @@
                             <div class="day-revenue">RMB ${dayTotalRMB.toFixed(0)}</div>
                             <div class="day-guests">${dayGuests}人</div>
                         </div>
-                    ` : ''}
+                    ` : '<div></div>'}
+                    ${editButtonHtml}
                 `;
                 container.appendChild(dayDiv);
             }
