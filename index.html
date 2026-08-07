@@ -323,11 +323,6 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            transition: transform 0.1s, box-shadow 0.1s;
-        }
-
-        .calendar-day:hover {
-            box-shadow: 0 4px 8px rgba(0,0,0,0.08);
         }
 
         .calendar-day.empty {
@@ -376,7 +371,6 @@
             cursor: pointer;
             width: 100%;
             text-align: center;
-            transition: all 0.2s;
         }
 
         .btn-day-edit:hover {
@@ -401,10 +395,37 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: space-between;
         }
 
         .chart-box canvas {
             max-width: 100%;
+        }
+
+        /* 静态支付方式详情文本块 */
+        .payment-legend-list {
+            width: 100%;
+            margin-top: 15px;
+            border-top: 1px dashed var(--border-color);
+            padding-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .payment-legend-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+        }
+
+        .payment-legend-color {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            margin-right: 6px;
         }
 
         /* 模态框统一设计 */
@@ -642,13 +663,13 @@
         <div class="card">
             <div class="card-title">📊 本月数据可视化分析</div>
             <div class="charts-container">
-                <!-- 图表 1：每日收益趋势 -->
+                <!-- 图表 1：每日收益趋势 (无动画) -->
                 <div class="chart-box">
                     <h4 style="text-align: center; margin-bottom: 10px; color: var(--text-light);">每日收益趋势 (RMB 换算总计)</h4>
                     <canvas id="revenueChart"></canvas>
                 </div>
 
-                <!-- 图表 2：当天时间段分布图 -->
+                <!-- 图表 2：当天时间段分布图 (无动画) -->
                 <div class="chart-box">
                     <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 10px;">
                         <h4 style="color: var(--text-light); margin: 0; font-size: 0.95rem;">当天时间段分布图</h4>
@@ -657,11 +678,15 @@
                     <canvas id="timeChart"></canvas>
                 </div>
 
-                <!-- 图表 3：新增的支付方式占比统计图 -->
+                <!-- 图表 3：静态支付方式占比统计 (静态饼图 + 直接显示占比数据) -->
                 <div class="chart-box">
                     <h4 style="text-align: center; margin-bottom: 10px; color: var(--text-light);">当月支付方式占比统计</h4>
-                    <div style="width: 100%; max-width: 250px; margin: 0 auto;">
+                    <div style="width: 100%; max-width: 200px; margin: 0 auto;">
                         <canvas id="paymentChart"></canvas>
+                    </div>
+                    <!-- 下方直接打印静态百分比与金额 -->
+                    <div class="payment-legend-list" id="paymentLegendList">
+                        <!-- 由 JS 填充 -->
                     </div>
                 </div>
             </div>
@@ -748,7 +773,7 @@
 
         let revenueChartInstance = null;
         let timeChartInstance = null;
-        let paymentChartInstance = null; // 新增支付方式图表实例
+        let paymentChartInstance = null;
 
         function updateClock() {
             const now = new Date();
@@ -1237,7 +1262,7 @@
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
 
-            // --- 1. 每日收益趋势图 ---
+            // --- 1. 每日收益趋势图 (关闭动画) ---
             const labels = [];
             const revenueData = [];
 
@@ -1264,13 +1289,17 @@
                         borderColor: '#8c2d19',
                         backgroundColor: 'rgba(140, 45, 25, 0.1)',
                         fill: true,
-                        tension: 0.3
+                        tension: 0
                     }]
                 },
-                options: { responsive: true, plugins: { legend: { display: false } } }
+                options: { 
+                    responsive: true, 
+                    animation: false, // 彻底关掉动画
+                    plugins: { legend: { display: false } } 
+                }
             });
 
-            // --- 2. 当天时间段分布图 ---
+            // --- 2. 当天时间段分布图 (关闭动画) ---
             const singleDayPicker = document.getElementById('singleDayPicker');
             const todayStr = new Date().toISOString().split('T')[0];
             
@@ -1309,11 +1338,12 @@
                         label: '时段收益 (RMB)',
                         data: timeData,
                         backgroundColor: '#d99b26',
-                        borderRadius: 4
+                        borderRadius: 2
                     }]
                 },
                 options: {
                     responsive: true,
+                    animation: false, // 彻底关掉动画
                     plugins: { legend: { display: false } },
                     scales: {
                         x: { title: { display: true, text: '时间段' } },
@@ -1322,7 +1352,7 @@
                 }
             });
 
-            // --- 3. 新增：支付方式占比饼图 ---
+            // --- 3. 支付方式占比 (静态饼图 + 下方直接显示具体数值/占比) ---
             const monthRecords = allRecords.filter(r => r.date && r.date.startsWith(monthPrefix));
             const paymentMap = {
                 '现金': 0,
@@ -1331,6 +1361,7 @@
                 '微信支付': 0
             };
 
+            let grandTotal = 0;
             monthRecords.forEach(r => {
                 const method = r.paymentMethod || '现金';
                 const amtRMB = getRecordAmounts(r).totalRMB;
@@ -1339,7 +1370,15 @@
                 } else {
                     paymentMap[method] = amtRMB;
                 }
+                grandTotal += amtRMB;
             });
+
+            const colors = {
+                '现金': '#27ae60',
+                "Touch 'n Go (TnG)": '#2980b9',
+                '支付宝': '#16a085',
+                '微信支付': '#8e44ad'
+            };
 
             if (paymentChartInstance) paymentChartInstance.destroy();
 
@@ -1350,34 +1389,41 @@
                     labels: Object.keys(paymentMap),
                     datasets: [{
                         data: Object.values(paymentMap),
-                        backgroundColor: [
-                            '#27ae60', // 现金 - 绿色
-                            '#2980b9', // TnG - 蓝色
-                            '#16a085', // 支付宝 - 青色
-                            '#8e44ad'  // 微信 - 紫色
-                        ]
+                        backgroundColor: Object.values(colors)
                     }]
                 },
                 options: {
                     responsive: true,
+                    animation: false, // 彻底关掉动图/旋转效果
                     plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: { boxWidth: 12, font: { size: 11 } }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const value = context.raw || 0;
-                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                                    return ` ${context.label}: RMB ${value.toFixed(2)} (${percentage}%)`;
-                                }
-                            }
-                        }
+                        legend: { display: false } // 禁用默认的悬浮小标签，改用下方我们自定义的静态文字
                     }
                 }
             });
+
+            // 渲染静态文字列表（占比% 与 金额）
+            const legendContainer = document.getElementById('paymentLegendList');
+            let legendHtml = '';
+            
+            Object.keys(paymentMap).forEach(key => {
+                const val = paymentMap[key];
+                const percentage = grandTotal > 0 ? ((val / grandTotal) * 100).toFixed(1) : '0.0';
+                
+                legendHtml += `
+                    <div class="payment-legend-item">
+                        <div>
+                            <span class="payment-legend-color" style="background-color: ${colors[key]};"></span>
+                            <b>${key}</b>
+                        </div>
+                        <div>
+                            <span>RMB ${val.toFixed(2)}</span>
+                            <b style="color: var(--primary-color); margin-left: 8px; font-size:0.9rem;">${percentage}%</b>
+                        </div>
+                    </div>
+                `;
+            });
+
+            legendContainer.innerHTML = legendHtml;
         }
 
         function switchTab(tab) {
