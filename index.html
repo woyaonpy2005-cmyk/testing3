@@ -598,12 +598,14 @@
                         <div class="month-stat-title">本月总客流量 ℹ️</div>
                         <div class="month-stat-num" id="monthTotalGuests">0 人</div>
                     </div>
-                    <div class="month-stat-card">
-                        <div class="month-stat-title">本月总结算收入 (RM)</div>
+                    <!-- 点击本月总结算收入RM弹出详细收入明细弹窗 -->
+                    <div class="month-stat-card clickable" onclick="showMonthRevenueDetails()" style="cursor: pointer;" title="点击查看本月各票种及服务收入明细">
+                        <div class="month-stat-title">本月总结算收入 (RM) ℹ️</div>
                         <div class="month-stat-num" id="monthTotalRM">RM 0.00</div>
                     </div>
-                    <div class="month-stat-card">
-                        <div class="month-stat-title">本月总结算收入 (RMB)</div>
+                    <!-- 点击本月总结算收入RMB弹出详细收入明细弹窗 -->
+                    <div class="month-stat-card clickable" onclick="showMonthRevenueDetails()" style="cursor: pointer;" title="点击查看本月各票种及服务收入明细">
+                        <div class="month-stat-title">本月总结算收入 (RMB) ℹ️</div>
                         <div class="month-stat-num" id="monthTotalRMB">RMB 0.00</div>
                     </div>
                 </div>
@@ -1150,6 +1152,49 @@
                 `🚩 导览服务：${totalGuideServices} 次（服务不计入客流人数）\n` +
                 `------------------------------------\n` +
                 `👥 实际本月总客流量：${totalGuests} 人`
+            );
+        }
+
+        // 点击“本月总结算收入”弹窗查看各项目收入明细
+        function showMonthRevenueDetails() {
+            const year = calendarDate.getFullYear();
+            const month = calendarDate.getMonth();
+            const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
+            const monthRecords = allRecords.filter(r => r.date && r.date.startsWith(monthPrefix));
+
+            let totalAdults = 0;
+            let totalChildren = 0;
+            let totalGuideServices = 0;
+
+            monthRecords.forEach(r => {
+                totalAdults += (parseInt(r.adultCount) || 0);
+                totalChildren += (parseInt(r.childCount) || 0);
+                if (r.hasGuide) {
+                    totalGuideServices += 1;
+                }
+            });
+
+            // 计算各项单项收入（根据系统的票价：成人票 RM35 / RMB60；儿童票 RM20 / RMB35；导览 RM30 / RMB50）
+            const adultRM = totalAdults * 35;
+            const adultRMB = totalAdults * 60;
+
+            const childRM = totalChildren * 20;
+            const childRMB = totalChildren * 35;
+
+            const guideRM = totalGuideServices * 30;
+            const guideRMB = totalGuideServices * 50;
+
+            const totalRM = adultRM + childRM + guideRM;
+            const totalRMB = adultRMB + childRMB + guideRMB;
+
+            alert(
+                `💰 ${year}年${month + 1}月 总结算收入明细\n` +
+                `------------------------------------\n` +
+                `👨 成人票 (${totalAdults}张):\n   RM ${adultRM.toFixed(2)} / RMB ${adultRMB.toFixed(2)}\n\n` +
+                `🧒 儿童票 (${totalChildren}张):\n   RM ${childRM.toFixed(2)} / RMB ${childRMB.toFixed(2)}\n\n` +
+                `🚩 导览服务 (${totalGuideServices}次):\n   RM ${guideRM.toFixed(2)} / RMB ${guideRMB.toFixed(2)}\n` +
+                `------------------------------------\n` +
+                `💵 本月总结算收入总计:\n   RM ${totalRM.toFixed(2)} / RMB ${totalRMB.toFixed(2)}`
             );
         }
 
