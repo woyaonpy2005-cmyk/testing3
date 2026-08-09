@@ -18,15 +18,15 @@ mongoose.connect(MONGO_URI)
     .then(() => console.log('✅ 成功连接至 MongoDB Atlas 云数据库'))
     .catch(err => console.error('❌ MongoDB 连接失败:', err));
 
-// 2. 数据结构定义 (支持 RM/RMB 及导览服务 hasGuide 字段)
+// 2. 数据结构定义 (更新支持 RM/RMB 及导览服务 hasGuide 字段)
 const recordSchema = new mongoose.Schema({
     id: { type: String, required: true, unique: true },
-    date: { type: String, required: true }, // 格式通常为 "YYYY-MM-DD"
+    date: { type: String, required: true },
     time: { type: String, required: true },
     currency: { type: String, default: 'MYR' },
     adultCount: { type: Number, default: 0 },
     childCount: { type: Number, default: 0 },
-    hasGuide: { type: Boolean, default: false }, // 导览服务字段
+    hasGuide: { type: Boolean, default: false }, // ✅ 补上导览服务字段，防止数据丢失
     totalCount: { type: Number, default: 0 },
     paymentMethod: { type: String, required: true },
     totalPrice: { type: Number, default: 0 },
@@ -49,60 +49,6 @@ app.get('/api/records', async (req, res) => {
     } catch (err) {
         console.error("GET 错误:", err);
         res.status(500).json({ error: '获取数据失败' });
-    }
-});
-
-// ✅ 新增 GET: 获取按指定月份（默认当月）结算的收入拆解数据（票种与导览服务）
-app.get('/api/records/monthly-summary', async (req, res) => {
-    try {
-        // 允许通过 query 传入年月，例如 /api/records/monthly-summary?year=2026&month=08
-        const now = new Date();
-        const year = req.query.year || now.getFullYear().toString();
-        const month = req.query.month || String(now.getMonth() + 1).padStart(2, '0');
-        
-        const monthPrefix = `${year}-${month}`; // 例如 "2026-08"
-
-        // 筛选出属于该月份的订单记录
-        const records = await Record.find({ date: { $regex: `^${monthPrefix}` } });
-
-        // 统计初始值
-        let summary = {
-            period: monthPrefix,
-            adult: { count: 0, amountRM: 0, amountRMB: 0 },
-            child: { count: 0, amountRM: 0, amountRMB: 0 },
-            guide: { count: 0, amountRM: 0, amountRMB: 0 },
-            grandTotalRM: 0,
-            grandTotalRMB: 0
-        };
-
-        // 假设的单价定义（可根据实际逻辑自行设置或在前端传入计算）
-        const ADULT_PRICE_RM = 50;  
-        const CHILD_PRICE_RM = 25;  
-        const GUIDE_PRICE_RM = 100; 
-
-        records.forEach(rec => {
-            const adult = rec.adultCount || 0;
-            const child = rec.childCount || 0;
-            const guide = rec.hasGuide ? 1 : 0;
-
-            summary.adult.count += adult;
-            summary.child.count += child;
-            summary.guide.count += guide;
-
-            // 如果使用固定单价累计 RM 收入：
-            summary.adult.amountRM += adult * ADULT_PRICE_RM;
-            summary.child.amountRM += child * CHILD_PRICE_RM;
-            summary.guide.amountRM += guide * GUIDE_PRICE_RM;
-
-            // 订单总金额累计
-            summary.grandTotalRM += (rec.totalPriceRM || rec.totalPrice || 0);
-            summary.grandTotalRMB += (rec.totalPriceRMB || rec.convertedRMB || 0);
-        });
-
-        res.json({ success: true, summary });
-    } catch (err) {
-        console.error("月度结算接口错误:", err);
-        res.status(500).json({ error: '月度结算计算失败' });
     }
 });
 
