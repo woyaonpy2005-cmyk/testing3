@@ -94,7 +94,7 @@
             color: var(--primary-color);
         }
 
-        /* 水平导航菜单栏 */
+        /* 同一排水平导航菜单栏 */
         .main-nav-bar {
             display: flex;
             justify-content: center;
@@ -274,6 +274,7 @@
 
         tr:nth-child(even) { background-color: #f7f3eb; }
 
+        /* 历史记录与月收入数据卡片样式 */
         .month-summary-bar {
             display: flex;
             gap: 15px;
@@ -360,8 +361,7 @@
 
         .charts-container {
             display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
+            justify-content: center;
             margin-top: 20px;
         }
 
@@ -370,8 +370,8 @@
             padding: 15px;
             border-radius: 6px;
             border: 1px solid var(--border-color);
-            flex: 1;
-            min-width: 280px;
+            width: 100%;
+            max-width: 320px;
         }
 
         .modal {
@@ -410,6 +410,7 @@
 </head>
 <body>
 
+    <!-- 顶部时间与状态栏 -->
     <header>
         <div class="header-left">
             <span class="date-display" id="currentDate">----年--月--日</span>
@@ -427,12 +428,14 @@
         </div>
     </header>
 
+    <!-- 同一排水平导航菜单栏 -->
     <nav class="main-nav-bar">
         <div class="nav-item active" id="navInput" onclick="switchMainTab('input')">🎟️ 门票收款录入</div>
         <div class="nav-item" id="navToday" onclick="switchMainTab('today')">📋 今日记录</div>
         <div class="nav-item" id="navHistory" onclick="switchMainTab('history')">📅 历史记录与统计</div>
     </nav>
 
+    <!-- 主体区域 -->
     <main>
 
         <!-- 1. 门票收款录入页面 -->
@@ -519,14 +522,6 @@
                 <h3 style="color: var(--primary-color);">📋 今日实时售票记录</h3>
                 <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.85rem;" onclick="window.print()">🖨️ 打印表格</button>
             </div>
-
-            <div class="chart-box" style="margin-bottom: 20px;">
-                <h4 style="text-align: center; margin-bottom: 8px; color: var(--primary-color);">⏰ 今日客流时段分布 (24小时制 / 2小时段)</h4>
-                <div style="height: 220px; width: 100%;">
-                    <canvas id="todayHourlyChart"></canvas>
-                </div>
-            </div>
-
             <div class="table-wrapper">
                 <table>
                     <thead>
@@ -539,14 +534,17 @@
                             <th>操作</th>
                         </tr>
                     </thead>
-                    <tbody id="recordsTableBody"></tbody>
+                    <tbody id="recordsTableBody">
+                        <!-- 动态填充 -->
+                    </tbody>
                 </table>
             </div>
         </section>
 
-        <!-- 3. 历史记录与统计页面 -->
+        <!-- 3. 历史记录与统计页面（完整补回：月收入统计卡片 + 月日历 + 图表） -->
         <section id="sectionHistory" style="display: none;">
             
+            <!-- 月度总结算收入卡片（补回部分） -->
             <div class="card">
                 <h3 style="color: var(--primary-color); margin-bottom: 12px; border-bottom: 2px solid var(--border-color); padding-bottom: 8px;" id="monthSummaryTitle">📊 月度总结算统计</h3>
                 <div class="month-summary-bar">
@@ -565,13 +563,14 @@
                 </div>
             </div>
 
+            <!-- 日历与支付分布卡片 -->
             <div class="card">
                 <div class="calendar-controls">
                     <div>
                         <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.8rem;" onclick="changeMonth(-1)">◀ 上月</button>
                         <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.8rem;" onclick="changeMonth(1)">下月 ▶</button>
                     </div>
-                    <h3 id="calendarMonthTitle" style="color: var(--primary-color);">----年 --月</h3>
+                    <h3 id="calendarMonthTitle" style="color: var(--primary-color);">2026年 8月</h3>
                     <button class="btn btn-edit" id="toggleEditModeBtn" onclick="toggleEditMode()">✏️ 修改</button>
                 </div>
 
@@ -587,15 +586,9 @@
                 <div class="calendar-grid" id="calendarDays" style="margin-top: 5px;"></div>
 
                 <div class="charts-container">
-                    <div class="chart-box" style="flex: 2; min-width: 300px;">
-                        <h4 style="text-align: center; margin-bottom: 8px; color: var(--primary-color);">⏰ 本月客流高峰时段 (24小时制 / 2小时段)</h4>
-                        <div style="height: 220px; width: 100%;">
-                            <canvas id="monthHourlyChart"></canvas>
-                        </div>
-                    </div>
-                    <div class="chart-box" style="flex: 1; min-width: 220px;">
-                        <h4 style="text-align: center; margin-bottom: 8px; color: var(--primary-color);">💳 本月支付方式占比</h4>
-                        <div style="width: 100%; max-width: 220px; margin: 0 auto; height: 220px;">
+                    <div class="chart-box">
+                        <h5 style="text-align: center; margin-bottom: 8px; color: var(--text-light);">本月支付方式占比</h5>
+                        <div style="width: 100%; max-width: 250px; margin: 0 auto;">
                             <canvas id="paymentChart"></canvas>
                         </div>
                     </div>
@@ -678,16 +671,7 @@
         let currentTab = 'input';
         let calendarDate = new Date();
         let isEditMode = false;
-
-        let todayHourlyChartInstance = null;
-        let monthHourlyChartInstance = null;
         let paymentChartInstance = null;
-
-        const timeBinsLabels = [
-            '00:00-02:00', '02:00-04:00', '04:00-06:00', '06:00-08:00',
-            '08:00-10:00', '10:00-12:00', '12:00-14:00', '14:00-16:00',
-            '16:00-18:00', '18:00-20:00', '20:00-22:00', '22:00-24:00'
-        ];
 
         function updateClock() {
             const now = new Date();
@@ -697,13 +681,16 @@
         setInterval(updateClock, 1000);
         updateClock();
 
+        // 水平导航栏切页功能
         function switchMainTab(tabName) {
             currentTab = tabName;
             
+            // 更新导航高亮状态
             document.getElementById('navInput').classList.toggle('active', tabName === 'input');
             document.getElementById('navToday').classList.toggle('active', tabName === 'today');
             document.getElementById('navHistory').classList.toggle('active', tabName === 'history');
 
+            // 切换对应的内容区显示
             document.getElementById('sectionInput').style.display = tabName === 'input' ? 'block' : 'none';
             document.getElementById('sectionToday').style.display = tabName === 'today' ? 'block' : 'none';
             document.getElementById('sectionHistory').style.display = tabName === 'history' ? 'block' : 'none';
@@ -949,20 +936,6 @@
             return { totalRM, totalRMB };
         }
 
-        function computeHourlyBins(records) {
-            const bins = new Array(12).fill(0);
-            records.forEach(r => {
-                if (!r.time) return;
-                const parts = r.time.split(':');
-                const hour = parseInt(parts[0], 10);
-                if (!isNaN(hour) && hour >= 0 && hour < 24) {
-                    const index = Math.floor(hour / 2);
-                    bins[index] += (r.totalCount || 0);
-                }
-            });
-            return bins;
-        }
-
         function renderUI() {
             const todayStr = new Date().toISOString().split('T')[0];
             const todayRecords = allRecords.filter(r => r.date === todayStr);
@@ -980,11 +953,10 @@
 
             if (currentTab === 'today') {
                 renderTodayTable(todayRecords);
-                renderTodayHourlyChart(todayRecords);
             } else if (currentTab === 'history') {
                 renderMonthSummary();
                 renderCalendar();
-                renderMonthCharts();
+                renderCharts();
             }
         }
 
@@ -1012,51 +984,14 @@
             });
         }
 
-        function renderTodayHourlyChart(todayRecords) {
-            const hourlyData = computeHourlyBins(todayRecords);
-
-            if (todayHourlyChartInstance) todayHourlyChartInstance.destroy();
-
-            const ctx = document.getElementById('todayHourlyChart').getContext('2d');
-            todayHourlyChartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: timeBinsLabels,
-                    datasets: [{
-                        label: '今日人数',
-                        data: hourlyData,
-                        backgroundColor: '#d99b26',
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        datalabels: {
-                            anchor: 'end',
-                            align: 'start',
-                            color: '#3b3228',
-                            font: { weight: 'bold', size: 10 },
-                            formatter: (val) => val > 0 ? `${val}人` : ''
-                        }
-                    },
-                    scales: {
-                        y: { beginAtZero: true, ticks: { stepSize: 1 } },
-                        x: { ticks: { font: { size: 9 } } }
-                    }
-                }
-            });
-        }
-
         function changeMonth(delta) {
             calendarDate.setMonth(calendarDate.getMonth() + delta);
             renderMonthSummary();
             renderCalendar();
-            renderMonthCharts();
+            renderCharts();
         }
 
+        // 渲染月汇总卡片（补回部分）
         function renderMonthSummary() {
             const year = calendarDate.getFullYear();
             const month = calendarDate.getMonth();
@@ -1117,89 +1052,64 @@
             }
         }
 
-        function renderMonthCharts() {
+        function renderCharts() {
             const year = calendarDate.getFullYear();
             const month = calendarDate.getMonth();
             const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
             const monthRecords = allRecords.filter(r => r.date && r.date.startsWith(monthPrefix));
 
-            // 1) 月度时段分布柱状图
-            const monthHourlyData = computeHourlyBins(monthRecords);
-            if (monthHourlyChartInstance) monthHourlyChartInstance.destroy();
-
-            const ctxHourly = document.getElementById('monthHourlyChart').getContext('2d');
-            monthHourlyChartInstance = new Chart(ctxHourly, {
-                type: 'bar',
-                data: {
-                    labels: timeBinsLabels,
-                    datasets: [{
-                        label: '本月人数',
-                        data: monthHourlyData,
-                        backgroundColor: '#8c2d19',
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        datalabels: {
-                            anchor: 'end',
-                            align: 'start',
-                            color: '#3b3228',
-                            font: { weight: 'bold', size: 10 },
-                            formatter: (val) => val > 0 ? `${val}人` : ''
-                        }
-                    },
-                    scales: {
-                        y: { beginAtZero: true, ticks: { stepSize: 1 } },
-                        x: { ticks: { font: { size: 9 } } }
-                    }
-                }
-            });
-
-            // 2) 完全静态不动的月度支付占比饼图
-            const paymentMap = { '现金': 0, "Touch 'n Go (TnG)": 0, '支付宝': 0, '微信支付': 0 };
-            let grandTotal = 0;
+            // 同时记录每种支付方式的 RMB 和 RM 金额
+            const paymentMap = {
+                '现金': { rm: 0, rmb: 0 },
+                "Touch 'n Go (TnG)": { rm: 0, rmb: 0 },
+                '支付宝': { rm: 0, rmb: 0 },
+                '微信支付': { rm: 0, rmb: 0 }
+            };
+            let grandTotalRMB = 0;
 
             monthRecords.forEach(r => {
                 const method = r.paymentMethod || '现金';
-                const amtRMB = getRecordAmounts(r).totalRMB;
-                paymentMap[method] = (paymentMap[method] || 0) + amtRMB;
-                grandTotal += amtRMB;
+                const amt = getRecordAmounts(r);
+                if (!paymentMap[method]) {
+                    paymentMap[method] = { rm: 0, rmb: 0 };
+                }
+                paymentMap[method].rm += amt.totalRM;
+                paymentMap[method].rmb += amt.totalRMB;
+                grandTotalRMB += amt.totalRMB;
             });
+
+            const labels = Object.keys(paymentMap);
+            const rmbData = labels.map(l => paymentMap[l].rmb);
+            const rmData = labels.map(l => paymentMap[l].rm);
 
             if (paymentChartInstance) paymentChartInstance.destroy();
 
-            const ctxPay = document.getElementById('paymentChart').getContext('2d');
-            paymentChartInstance = new Chart(ctxPay, {
+            const ctx = document.getElementById('paymentChart').getContext('2d');
+            paymentChartInstance = new Chart(ctx, {
                 type: 'pie',
                 data: {
-                    labels: Object.keys(paymentMap),
+                    labels: labels,
                     datasets: [{
-                        data: Object.values(paymentMap),
+                        data: rmbData,
                         backgroundColor: ['#27ae60', '#2980b9', '#16a085', '#8e44ad']
                     }]
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false,
-                    animation: false, // 禁用入场动画，防止旋转/跳动
-                    events: [],       // 禁用所有鼠标交互（如 hover 移动、点击膨胀）
-                    hover: { mode: null },
+                    animation: false,
                     plugins: {
                         legend: { display: false },
-                        tooltip: { enabled: false }, // 禁用悬浮提示框
                         datalabels: {
                             display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
                             color: '#ffffff',
                             font: { weight: 'bold', size: 10 },
                             textAlign: 'center',
                             formatter: (val, ctx) => {
-                                const label = ctx.chart.data.labels[ctx.dataIndex];
-                                const pct = grandTotal > 0 ? ((val / grandTotal) * 100).toFixed(1) : '0';
-                                return `${label}\n¥${val}\n${pct}%`;
+                                const idx = ctx.dataIndex;
+                                const label = ctx.chart.data.labels[idx];
+                                const rmVal = rmData[idx];
+                                const pct = grandTotalRMB > 0 ? ((val / grandTotalRMB) * 100).toFixed(1) : '0';
+                                return `${label}\nRM${rmVal} / ¥${val}\n${pct}%`;
                             }
                         }
                     }
