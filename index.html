@@ -289,6 +289,12 @@
             border-radius: 6px;
             padding: 12px;
             text-align: center;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        .month-stat-card.clickable:hover {
+            background: #f5ea98;
+            transform: translateY(-2px);
         }
 
         .month-stat-title {
@@ -587,8 +593,9 @@
             <div class="card">
                 <h3 style="color: var(--primary-color); margin-bottom: 12px; border-bottom: 2px solid var(--border-color); padding-bottom: 8px;" id="monthSummaryTitle">📊 月度总结算统计</h3>
                 <div class="month-summary-bar">
-                    <div class="month-stat-card">
-                        <div class="month-stat-title">本月总客流量</div>
+                    <!-- 点击本月总客流量弹出详细分类弹窗 -->
+                    <div class="month-stat-card clickable" onclick="showMonthGuestDetails()" style="cursor: pointer;" title="点击查看本月门票及导览明细">
+                        <div class="month-stat-title">本月总客流量 ℹ️</div>
                         <div class="month-stat-num" id="monthTotalGuests">0 人</div>
                     </div>
                     <div class="month-stat-card">
@@ -774,6 +781,14 @@
             calculateFormTotal();
         }
 
+        // 统一提取单条记录的人数（导览不作为人数）
+        function getRecordGuestCount(r) {
+            if (typeof r.adultCount !== 'undefined' || typeof r.childCount !== 'undefined') {
+                return (parseInt(r.adultCount) || 0) + (parseInt(r.childCount) || 0);
+            }
+            return parseInt(r.totalCount) || 0;
+        }
+
         function getTicketValues() {
             let adultSelect = document.getElementById('adultQtySelect').value;
             let adultQty = adultSelect === 'custom' ? parseInt(document.getElementById('adultCustomQty').value || 0) : parseInt(adultSelect);
@@ -825,7 +840,7 @@
                 adultCount: ticketData.adultQty,
                 childCount: ticketData.childQty,
                 hasGuide: ticketData.hasGuide,
-                totalCount: ticketData.totalCount,
+                totalCount: ticketData.totalCount, // 仅含成人与儿童
                 paymentMethod: document.getElementById('paymentMethod').value,
                 totalPrice: ticketData.totalPriceRM,
                 totalPriceRM: ticketData.totalPriceRM,
@@ -886,10 +901,11 @@
             let html = '';
             dayRecords.forEach(r => {
                 const amt = getRecordAmounts(r);
+                const guestCount = getRecordGuestCount(r);
                 html += `
                     <div class="history-list-item">
                         <div>
-                            <div><b>${r.time || ''}</b> (${r.totalCount}人) - ${r.details || ''}</div>
+                            <div><b>${r.time || ''}</b> (${guestCount}人) - ${r.details || ''}</div>
                             <div style="font-size:0.8rem; color:var(--text-light);">${r.paymentMethod} | ${r.displayPrice || 'RM'+amt.totalRM}</div>
                         </div>
                         <div style="display:flex; gap:4px;">
@@ -957,7 +973,7 @@
                 date: document.getElementById('editRecordDate').value,
                 time: document.getElementById('editRecordTime').value,
                 adultCount, childCount, hasGuide,
-                totalCount: adultCount + childCount,
+                totalCount: adultCount + childCount, // 仅统计门票人数
                 totalPrice: calcRM, totalPriceRM: calcRM, totalPriceRMB: calcRMB, convertedRMB: calcRMB,
                 displayPrice: document.getElementById('editTotalPrice').value,
                 paymentMethod: document.getElementById('editPaymentMethod').value,
@@ -1004,7 +1020,7 @@
                 const hour = parseInt(parts[0], 10);
                 if (!isNaN(hour) && hour >= 0 && hour < 24) {
                     const index = Math.floor(hour / 2);
-                    bins[index] += (r.totalCount || 0);
+                    bins[index] += getRecordGuestCount(r);
                 }
             });
             return bins;
@@ -1016,7 +1032,7 @@
 
             let todayGuests = 0, todayRM = 0, todayRMB = 0;
             todayRecords.forEach(r => {
-                todayGuests += (r.totalCount || 0);
+                todayGuests += getRecordGuestCount(r);
                 const amt = getRecordAmounts(r);
                 todayRM += amt.totalRM;
                 todayRMB += amt.totalRMB;
@@ -1045,9 +1061,10 @@
             [...todayRecords].reverse().forEach(r => {
                 const tr = document.createElement('tr');
                 const amt = getRecordAmounts(r);
+                const guestCount = getRecordGuestCount(r);
                 tr.innerHTML = `
                     <td>${r.time}</td>
-                    <td><b>${r.totalCount}</b></td>
+                    <td><b>${guestCount}</b></td>
                     <td>${r.details || '-'}</td>
                     <td>${r.paymentMethod}</td>
                     <td><b style="color:var(--primary-color);">${r.displayPrice || 'RM'+amt.totalRM}</b></td>
@@ -1104,6 +1121,38 @@
             renderMonthCharts();
         }
 
+        // 点击“本月总客流量”弹窗查看明细
+        function showMonthGuestDetails() {
+            const year = calendarDate.getFullYear();
+            const month = calendarDate.getMonth();
+            const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
+            const monthRecords = allRecords.filter(r => r.date && r.date.startsWith(monthPrefix));
+
+            let totalAdults = 0;
+            let totalChildren = 0;
+            let totalGuideServices = 0;
+
+            monthRecords.forEach(r => {
+                totalAdults += (parseInt(r.adultCount) || 0);
+                totalChildren += (parseInt(r.childCount) || 0);
+                if (r.hasGuide) {
+                    totalGuideServices += 1;
+                }
+            });
+
+            const totalGuests = totalAdults + totalChildren;
+
+            alert(
+                `📊 ${year}年${month + 1}月 客流与服务明细\n` +
+                `------------------------------------\n` +
+                `👨 成人票：${totalAdults} 张\n` +
+                `🧒 儿童票：${totalChildren} 张\n` +
+                `🚩 导览服务：${totalGuideServices} 次（服务不计入客流人数）\n` +
+                `------------------------------------\n` +
+                `👥 实际本月总客流量：${totalGuests} 人`
+            );
+        }
+
         function renderMonthSummary() {
             const year = calendarDate.getFullYear();
             const month = calendarDate.getMonth();
@@ -1114,7 +1163,7 @@
 
             let mGuests = 0, mRM = 0, mRMB = 0;
             monthRecords.forEach(r => {
-                mGuests += (r.totalCount || 0);
+                mGuests += getRecordGuestCount(r);
                 const amt = getRecordAmounts(r);
                 mRM += amt.totalRM;
                 mRMB += amt.totalRMB;
@@ -1150,7 +1199,7 @@
                 let dayRM = 0, dayGuests = 0;
                 dayRecords.forEach(r => {
                     dayRM += getRecordAmounts(r).totalRM;
-                    dayGuests += (r.totalCount || 0);
+                    dayGuests += getRecordGuestCount(r);
                 });
 
                 const dayDiv = document.createElement('div');
