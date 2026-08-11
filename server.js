@@ -6,7 +6,6 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 读取 Render 的环境变量 MONGO_URI，若无则使用默认连接字符串
 const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://woyaonpy2005_db_user:Lim050831.@cluster0.ztvp8bb.mongodb.net/ticket_system?appName=Cluster0";
 
 app.use(cors());
@@ -18,7 +17,7 @@ mongoose.connect(MONGO_URI)
     .then(() => console.log('✅ 成功连接至 MongoDB Atlas 云数据库'))
     .catch(err => console.error('❌ MongoDB 连接失败:', err));
 
-// 2. 数据结构定义 (包含摄影师门票及全天免付费所需字段)
+// 2. 数据结构定义 (扩展摄影师及拍照随行客门票字段)
 const recordSchema = new mongoose.Schema({
     id: { type: String, required: true, unique: true },
     date: { type: String, required: true },
@@ -26,8 +25,13 @@ const recordSchema = new mongoose.Schema({
     currency: { type: String, default: 'MYR' },
     adultCount: { type: Number, default: 0 },
     childCount: { type: Number, default: 0 },
-    isPhotographerPaid: { type: Boolean, default: false }, // 是否购买了摄影师门票
-    photographerName: { type: String, default: '' },      // 摄影师姓名（选填）
+    
+    // 📸 新增摄影师及拍照随行客人字段
+    photographerCount: { type: Number, default: 0 },
+    photographerName: { type: String, default: '' },
+    photoAdultCount: { type: Number, default: 0 },
+    photoChildCount: { type: Number, default: 0 },
+    
     hasGuide: { type: Boolean, default: false },
     totalCount: { type: Number, default: 0 },
     paymentMethod: { type: String, required: true },
@@ -41,7 +45,7 @@ const recordSchema = new mongoose.Schema({
 
 const Record = mongoose.model('Record', recordSchema);
 
-// 3. API 路由接口配置
+// 3. API 路由接口
 
 // GET: 获取所有售票记录
 app.get('/api/records', async (req, res) => {
@@ -92,7 +96,6 @@ app.delete('/api/records/:id', async (req, res) => {
     }
 });
 
-// 4. 路由兜底，确保前端页面能正常加载
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
