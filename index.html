@@ -94,7 +94,6 @@
             color: var(--primary-color);
         }
 
-        /* 水平导航菜单栏 */
         .main-nav-bar {
             display: flex;
             justify-content: center;
@@ -185,6 +184,16 @@
             margin-bottom: 15px;
         }
 
+        .ticket-box-title {
+            font-weight: bold;
+            font-size: 1rem;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
         .ticket-row {
             display: flex;
             align-items: center;
@@ -194,7 +203,7 @@
         }
 
         .ticket-type-label {
-            width: 90px;
+            width: 100px;
             font-weight: bold;
             font-size: 0.95rem;
         }
@@ -380,7 +389,6 @@
             min-width: 280px;
         }
 
-        /* 饼图下方图例清单样式 */
         .pie-legend-container {
             margin-top: 15px;
             display: flex;
@@ -482,8 +490,10 @@
         <section id="sectionInput" class="card">
             <h3 style="color: var(--primary-color); margin-bottom: 15px; border-bottom: 2px solid var(--border-color); padding-bottom: 8px;">🎟️ 门票收款录入</h3>
             <form id="ticketForm" onsubmit="handleFormSubmit(event)">
+                
+                <!-- 1️⃣ 常规门票区域 -->
                 <div class="ticket-box">
-                    <label style="margin-bottom: 12px; display: block; font-size: 1rem;">选择门票类型与数量：</label>
+                    <div class="ticket-box-title">🎫 常规散客门票：</div>
                     
                     <div class="ticket-row">
                         <span class="ticket-type-label">👨 成人票：</span>
@@ -531,6 +541,80 @@
                             <input type="checkbox" id="guideServiceCheck" onchange="calculateFormTotal()">
                             <span>导览服务 (RM 30 / RMB 50)</span>
                         </label>
+                    </div>
+                </div>
+
+                <!-- 2️⃣ 摄影师及跟拍团队门票区域 -->
+                <div class="ticket-box" style="background-color: #fdf8f0; border-color: #e0cca7;">
+                    <div class="ticket-box-title">📷 摄影师与随行拍照客门票：</div>
+
+                    <!-- 摄影师购买/选择 -->
+                    <div class="ticket-row">
+                        <span class="ticket-type-label">📸 摄影师：</span>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="photographerCheck" onchange="handlePhotographerCheckChange()">
+                            <span>包含摄影师门票</span>
+                        </label>
+                    </div>
+
+                    <div id="photographerDetailsGroup" style="display: none; padding-left: 20px; margin-bottom: 12px;">
+                        <div class="ticket-row">
+                            <label class="checkbox-label" style="font-weight: normal; font-size: 0.9rem;">
+                                <input type="radio" name="photographerType" value="new" checked onchange="togglePhotographerMode()">
+                                <span><b>首次付费登记</b> (RM35 / RMB60)</span>
+                            </label>
+                            <input type="text" id="photographerNameInput" placeholder="输入摄影师名字（可选）" style="padding: 5px 10px; font-size: 0.85rem; width: 180px;">
+                        </div>
+                        <div class="ticket-row">
+                            <label class="checkbox-label" style="font-weight: normal; font-size: 0.9rem;">
+                                <input type="radio" name="photographerType" value="existing" onchange="togglePhotographerMode()">
+                                <span><b>当天已付费过（免费进出）</b></span>
+                            </label>
+                            <select id="existingPhotographersSelect" onchange="calculateFormTotal()" style="padding: 5px; font-size: 0.85rem; max-width: 200px;">
+                                <option value="">-- 选择已登记摄影师 --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 拍照随行人员 -->
+                    <div class="ticket-row">
+                        <span class="ticket-type-label">💃 拍照成人：</span>
+                        <select id="photoAdultQtySelect" onchange="toggleCustomQty('photoAdultQtySelect', 'photoAdultCustomQty')">
+                            <option value="0">0 人</option>
+                            <option value="1">1 人</option>
+                            <option value="2">2 人</option>
+                            <option value="3">3 人</option>
+                            <option value="4">4 人</option>
+                            <option value="5">5 人</option>
+                            <option value="6">6 人</option>
+                            <option value="7">7 人</option>
+                            <option value="8">8 人</option>
+                            <option value="9">9 人</option>
+                            <option value="10">10 人</option>
+                            <option value="custom">自定义...</option>
+                        </select>
+                        <input type="number" id="photoAdultCustomQty" class="custom-input" placeholder="1-100" min="1" max="100" style="width: 90px;">
+                        <span style="font-size: 0.85rem; color: var(--text-light);">RM53 / RMB90</span>
+                    </div>
+
+                    <div class="ticket-row">
+                        <span class="ticket-type-label">👧 拍照儿童：</span>
+                        <select id="photoChildQtySelect" onchange="toggleCustomQty('photoChildQtySelect', 'photoChildCustomQty')">
+                            <option value="0">0 人</option>
+                            <option value="1">1 人</option>
+                            <option value="2">2 人</option>
+                            <option value="3">3 人</option>
+                            <option value="4">4 人</option>
+                            <option value="5">5 人</option>
+                            <option value="6">6 人</option>
+                            <option value="7">7 人</option>
+                            <option value="8">8 人</option>
+                            <option value="9">9 人</option>
+                            <option value="10">10 人</option>
+                            <option value="custom">自定义...</option>
+                        </select>
+                        <input type="number" id="photoChildCustomQty" class="custom-input" placeholder="1-100" min="1" max="100" style="width: 90px;">
+                        <span style="font-size: 0.85rem; color: var(--text-light);">RM30 / RMB50</span>
                     </div>
                 </div>
 
@@ -593,17 +677,14 @@
             <div class="card">
                 <h3 style="color: var(--primary-color); margin-bottom: 12px; border-bottom: 2px solid var(--border-color); padding-bottom: 8px;" id="monthSummaryTitle">📊 月度总结算统计</h3>
                 <div class="month-summary-bar">
-                    <!-- 点击本月总客流量弹出详细分类弹窗 -->
                     <div class="month-stat-card clickable" onclick="showMonthGuestDetails()" style="cursor: pointer;" title="点击查看本月门票及导览明细">
                         <div class="month-stat-title">本月总客流量 ℹ️</div>
                         <div class="month-stat-num" id="monthTotalGuests">0 人</div>
                     </div>
-                    <!-- 点击本月总结算收入RM弹出详细收入明细弹窗 -->
                     <div class="month-stat-card clickable" onclick="showMonthRevenueDetails()" style="cursor: pointer;" title="点击查看本月各票种及服务收入明细">
                         <div class="month-stat-title">本月总结算收入 (RM) ℹ️</div>
                         <div class="month-stat-num" id="monthTotalRM">RM 0.00</div>
                     </div>
-                    <!-- 点击本月总结算收入RMB弹出详细收入明细弹窗 -->
                     <div class="month-stat-card clickable" onclick="showMonthRevenueDetails()" style="cursor: pointer;" title="点击查看本月各票种及服务收入明细">
                         <div class="month-stat-title">本月总结算收入 (RMB) ℹ️</div>
                         <div class="month-stat-num" id="monthTotalRMB">RMB 0.00</div>
@@ -639,13 +720,11 @@
                             <canvas id="monthHourlyChart"></canvas>
                         </div>
                     </div>
-                    <!-- 饼图及下方自定义图例 -->
                     <div class="chart-box" style="flex: 1; min-width: 260px;">
                         <h4 style="text-align: center; margin-bottom: 8px; color: var(--primary-color);">💳 本月支付方式占比</h4>
                         <div style="width: 100%; max-width: 160px; margin: 0 auto; height: 160px;">
                             <canvas id="paymentChart"></canvas>
                         </div>
-                        <!-- 下方详细分类列表 -->
                         <div class="pie-legend-container" id="pieLegendContainer"></div>
                     </div>
                 </div>
@@ -685,21 +764,42 @@
                     <label>时间：</label>
                     <input type="time" id="editRecordTime" step="1" required>
                 </div>
-                <div class="form-group" style="margin-bottom: 8px;">
-                    <label>成人票：</label>
-                    <input type="number" id="editAdultCount" min="0" required onchange="calculateEditTotal()">
+                
+                <p style="font-weight:bold; font-size:0.85rem; color:var(--primary-color); margin-top:5px;">[常规票]</p>
+                <div style="display:flex; gap:10px;">
+                    <div class="form-group" style="flex:1;">
+                        <label>成人：</label>
+                        <input type="number" id="editAdultCount" min="0" required onchange="calculateEditTotal()">
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label>儿童：</label>
+                        <input type="number" id="editChildCount" min="0" required onchange="calculateEditTotal()">
+                    </div>
                 </div>
-                <div class="form-group" style="margin-bottom: 8px;">
-                    <label>儿童票：</label>
-                    <input type="number" id="editChildCount" min="0" required onchange="calculateEditTotal()">
+
+                <p style="font-weight:bold; font-size:0.85rem; color:var(--primary-color); margin-top:8px;">[拍照跟拍票]</p>
+                <div style="display:flex; gap:10px;">
+                    <div class="form-group" style="flex:1;">
+                        <label>摄影师：</label>
+                        <input type="number" id="editPhotographerCount" min="0" max="1" required onchange="calculateEditTotal()">
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label>拍照成人：</label>
+                        <input type="number" id="editPhotoAdultCount" min="0" required onchange="calculateEditTotal()">
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label>拍照儿童：</label>
+                        <input type="number" id="editPhotoChildCount" min="0" required onchange="calculateEditTotal()">
+                    </div>
                 </div>
-                <div class="form-group" style="margin-bottom: 8px;">
+
+                <div class="form-group" style="margin-top: 8px;">
                     <label class="checkbox-label">
                         <input type="checkbox" id="editGuideCheck" onchange="calculateEditTotal()">
                         <span>导览服务</span>
                     </label>
                 </div>
-                <div class="form-group" style="margin-bottom: 8px;">
+                <div class="form-group" style="margin-bottom: 8px; margin-top: 8px;">
                     <label>付款方式：</label>
                     <select id="editPaymentMethod">
                         <option value="现金">💵 现金</option>
@@ -783,15 +883,57 @@
             calculateFormTotal();
         }
 
-        // 统一提取单条记录的人数（导览不作为人数）
-        function getRecordGuestCount(r) {
-            if (typeof r.adultCount !== 'undefined' || typeof r.childCount !== 'undefined') {
-                return (parseInt(r.adultCount) || 0) + (parseInt(r.childCount) || 0);
+        function handlePhotographerCheckChange() {
+            const isChecked = document.getElementById('photographerCheck').checked;
+            document.getElementById('photographerDetailsGroup').style.display = isChecked ? 'block' : 'none';
+            calculateFormTotal();
+        }
+
+        function togglePhotographerMode() {
+            const radios = document.getElementsByName('photographerType');
+            let isNew = true;
+            for (let r of radios) {
+                if (r.checked && r.value === 'existing') isNew = false;
             }
-            return parseInt(r.totalCount) || 0;
+            document.getElementById('photographerNameInput').disabled = !isNew;
+            document.getElementById('existingPhotographersSelect').disabled = isNew;
+            calculateFormTotal();
+        }
+
+        // 获取当天已登记的摄影师名字
+        function updateTodayPhotographersDropdown() {
+            const todayStr = new Date().toISOString().split('T')[0];
+            const todayRecords = allRecords.filter(r => r.date === todayStr);
+            const select = document.getElementById('existingPhotographersSelect');
+            
+            const pSet = new Set();
+            todayRecords.forEach(r => {
+                if (r.photographerName && r.photographerName.trim() !== '') {
+                    pSet.add(r.photographerName.trim());
+                }
+            });
+
+            const currentVal = select.value;
+            select.innerHTML = '<option value="">-- 选择已登记摄影师 --</option>';
+            pSet.forEach(name => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                opt.textContent = `📷 ${name}`;
+                select.appendChild(opt);
+            });
+            select.value = currentVal;
+        }
+
+        function getRecordGuestCount(r) {
+            return (parseInt(r.adultCount)||0) + 
+                   (parseInt(r.childCount)||0) + 
+                   (parseInt(r.photographerCount)||0) + 
+                   (parseInt(r.photoAdultCount)||0) + 
+                   (parseInt(r.photoChildCount)||0);
         }
 
         function getTicketValues() {
+            // 常规票
             let adultSelect = document.getElementById('adultQtySelect').value;
             let adultQty = adultSelect === 'custom' ? parseInt(document.getElementById('adultCustomQty').value || 0) : parseInt(adultSelect);
 
@@ -800,15 +942,60 @@
 
             let hasGuide = document.getElementById('guideServiceCheck').checked;
 
-            let totalPriceRM = (adultQty * 35) + (childQty * 20) + (hasGuide ? 30 : 0);
-            let totalPriceRMB = (adultQty * 60) + (childQty * 35) + (hasGuide ? 50 : 0);
+            // 摄影师票
+            let hasPhotographer = document.getElementById('photographerCheck').checked;
+            let photographerCount = 0;
+            let photographerPriceRM = 0;
+            let photographerPriceRMB = 0;
+            let photographerName = "";
+
+            if (hasPhotographer) {
+                photographerCount = 1;
+                const radios = document.getElementsByName('photographerType');
+                let isNew = true;
+                for (let r of radios) { if (r.checked && r.value === 'existing') isNew = false; }
+
+                if (isNew) {
+                    photographerPriceRM = 35;
+                    photographerPriceRMB = 60;
+                    photographerName = document.getElementById('photographerNameInput').value.trim() || "摄影师";
+                } else {
+                    photographerPriceRM = 0; // 当天重复进出免费
+                    photographerPriceRMB = 0;
+                    photographerName = document.getElementById('existingPhotographersSelect').value || "已进场摄影师";
+                }
+            }
+
+            // 拍照随行人员票
+            let photoAdultSelect = document.getElementById('photoAdultQtySelect').value;
+            let photoAdultQty = photoAdultSelect === 'custom' ? parseInt(document.getElementById('photoAdultCustomQty').value || 0) : parseInt(photoAdultSelect);
+
+            let photoChildSelect = document.getElementById('photoChildQtySelect').value;
+            let photoChildQty = photoChildSelect === 'custom' ? parseInt(document.getElementById('photoChildCustomQty').value || 0) : parseInt(photoChildSelect);
+
+            // 总额计算
+            let totalPriceRM = (adultQty * 35) + (childQty * 20) + (hasGuide ? 30 : 0) +
+                               photographerPriceRM + (photoAdultQty * 53) + (photoChildQty * 30);
+            let totalPriceRMB = (adultQty * 60) + (childQty * 35) + (hasGuide ? 50 : 0) +
+                                photographerPriceRMB + (photoAdultQty * 90) + (photoChildQty * 50);
 
             let details = [];
             if (adultQty > 0) details.push(`成人x${adultQty}`);
             if (childQty > 0) details.push(`儿童x${childQty}`);
             if (hasGuide) details.push(`导览`);
+            if (hasPhotographer) details.push(`摄影师(${photographerName})`);
+            if (photoAdultQty > 0) details.push(`拍照成人x${photoAdultQty}`);
+            if (photoChildQty > 0) details.push(`拍照儿童x${photoChildQty}`);
 
-            return { adultQty, childQty, hasGuide, totalCount: adultQty + childQty, totalPriceRM, totalPriceRMB, details: details.join(', ') || '无门票' };
+            let totalCount = adultQty + childQty + photographerCount + photoAdultQty + photoChildQty;
+
+            return {
+                adultQty, childQty, hasGuide,
+                photographerCount, photographerName,
+                photoAdultQty, photoChildQty,
+                totalCount, totalPriceRM, totalPriceRMB,
+                details: details.join(', ') || '无门票'
+            };
         }
 
         function calculateFormTotal() {
@@ -841,8 +1028,12 @@
                 time: timeStr,
                 adultCount: ticketData.adultQty,
                 childCount: ticketData.childQty,
+                photographerCount: ticketData.photographerCount,
+                photographerName: ticketData.photographerName,
+                photoAdultCount: ticketData.photoAdultQty,
+                photoChildCount: ticketData.photoChildQty,
                 hasGuide: ticketData.hasGuide,
-                totalCount: ticketData.totalCount, // 仅含成人与儿童
+                totalCount: ticketData.totalCount,
                 paymentMethod: document.getElementById('paymentMethod').value,
                 totalPrice: ticketData.totalPriceRM,
                 totalPriceRM: ticketData.totalPriceRM,
@@ -862,6 +1053,9 @@
                     document.getElementById('ticketForm').reset();
                     document.getElementById('adultCustomQty').style.display = 'none';
                     document.getElementById('childCustomQty').style.display = 'none';
+                    document.getElementById('photoAdultCustomQty').style.display = 'none';
+                    document.getElementById('photoChildCustomQty').style.display = 'none';
+                    document.getElementById('photographerDetailsGroup').style.display = 'none';
                     calculateFormTotal();
                     await fetchRecords();
                     alert('收款提交成功！');
@@ -927,6 +1121,9 @@
             document.getElementById('editRecordTime').value = record.time || '12:00:00';
             document.getElementById('editAdultCount').value = record.adultCount || 0;
             document.getElementById('editChildCount').value = record.childCount || 0;
+            document.getElementById('editPhotographerCount').value = record.photographerCount || 0;
+            document.getElementById('editPhotoAdultCount').value = record.photoAdultCount || 0;
+            document.getElementById('editPhotoChildCount').value = record.photoChildCount || 0;
             document.getElementById('editGuideCheck').checked = !!record.hasGuide;
             document.getElementById('editPaymentMethod').value = record.paymentMethod;
             document.getElementById('editTotalPrice').value = record.displayPrice || `RM${record.totalPrice}`;
@@ -940,6 +1137,9 @@
             document.getElementById('editRecordTime').value = new Date().toTimeString().split(' ')[0];
             document.getElementById('editAdultCount').value = 1;
             document.getElementById('editChildCount').value = 0;
+            document.getElementById('editPhotographerCount').value = 0;
+            document.getElementById('editPhotoAdultCount').value = 0;
+            document.getElementById('editPhotoChildCount').value = 0;
             document.getElementById('editGuideCheck').checked = false;
             document.getElementById('editPaymentMethod').value = '现金';
             calculateEditTotal();
@@ -951,8 +1151,14 @@
         function calculateEditTotal() {
             const adult = parseInt(document.getElementById('editAdultCount').value || 0);
             const child = parseInt(document.getElementById('editChildCount').value || 0);
+            const photo = parseInt(document.getElementById('editPhotographerCount').value || 0);
+            const pAdult = parseInt(document.getElementById('editPhotoAdultCount').value || 0);
+            const pChild = parseInt(document.getElementById('editPhotoChildCount').value || 0);
             const hasGuide = document.getElementById('editGuideCheck').checked;
-            document.getElementById('editTotalPrice').value = `RM${(adult*35)+(child*20)+(hasGuide?30:0)} / RMB${(adult*60)+(child*35)+(hasGuide?50:0)}`;
+
+            const calcRM = (adult*35) + (child*20) + (photo*35) + (pAdult*53) + (pChild*30) + (hasGuide?30:0);
+            const calcRMB = (adult*60) + (child*35) + (photo*60) + (pAdult*90) + (pChild*50) + (hasGuide?50:0);
+            document.getElementById('editTotalPrice').value = `RM${calcRM} / RMB${calcRMB}`;
         }
 
         async function saveEditRecord(e) {
@@ -960,22 +1166,28 @@
             const id = document.getElementById('editRecordId').value;
             const adultCount = parseInt(document.getElementById('editAdultCount').value || 0);
             const childCount = parseInt(document.getElementById('editChildCount').value || 0);
+            const photographerCount = parseInt(document.getElementById('editPhotographerCount').value || 0);
+            const photoAdultCount = parseInt(document.getElementById('editPhotoAdultCount').value || 0);
+            const photoChildCount = parseInt(document.getElementById('editPhotoChildCount').value || 0);
             const hasGuide = document.getElementById('editGuideCheck').checked;
 
             let detailsArr = [];
             if (adultCount > 0) detailsArr.push(`成人x${adultCount}`);
             if (childCount > 0) detailsArr.push(`儿童x${childCount}`);
+            if (photographerCount > 0) detailsArr.push(`摄影师x${photographerCount}`);
+            if (photoAdultCount > 0) detailsArr.push(`拍照成人x${photoAdultCount}`);
+            if (photoChildCount > 0) detailsArr.push(`拍照儿童x${photoChildCount}`);
             if (hasGuide) detailsArr.push(`导览`);
 
-            const calcRM = (adultCount*35) + (childCount*20) + (hasGuide?30:0);
-            const calcRMB = (adultCount*60) + (childCount*35) + (hasGuide?50:0);
+            const calcRM = (adultCount*35) + (childCount*20) + (photographerCount*35) + (photoAdultCount*53) + (photoChildCount*30) + (hasGuide?30:0);
+            const calcRMB = (adultCount*60) + (childCount*35) + (photographerCount*60) + (photoAdultCount*90) + (photoChildCount*50) + (hasGuide?50:0);
 
             const payload = {
                 id: id || Date.now().toString(),
                 date: document.getElementById('editRecordDate').value,
                 time: document.getElementById('editRecordTime').value,
-                adultCount, childCount, hasGuide,
-                totalCount: adultCount + childCount, // 仅统计门票人数
+                adultCount, childCount, photographerCount, photoAdultCount, photoChildCount, hasGuide,
+                totalCount: adultCount + childCount + photographerCount + photoAdultCount + photoChildCount,
                 totalPrice: calcRM, totalPriceRM: calcRM, totalPriceRMB: calcRMB, convertedRMB: calcRMB,
                 displayPrice: document.getElementById('editTotalPrice').value,
                 paymentMethod: document.getElementById('editPaymentMethod').value,
@@ -1000,17 +1212,14 @@
             try {
                 const res = await fetch('/api/records');
                 allRecords = await res.json();
+                updateTodayPhotographersDropdown();
                 renderUI();
             } catch (e) { console.error(e); }
         }
 
         function getRecordAmounts(r) {
-            let totalRM = ((r.adultCount||0)*35) + ((r.childCount||0)*20) + (r.hasGuide?30:0);
-            let totalRMB = ((r.adultCount||0)*60) + ((r.childCount||0)*35) + (r.hasGuide?50:0);
-            if (totalRM === 0 && (r.totalPriceRM || r.totalPrice)) {
-                totalRM = r.totalPriceRM || r.totalPrice || 0;
-                totalRMB = r.totalPriceRMB || r.convertedRMB || 0;
-            }
+            let totalRM = (r.totalPriceRM !== undefined) ? r.totalPriceRM : (r.totalPrice || 0);
+            let totalRMB = (r.totalPriceRMB !== undefined) ? r.totalPriceRMB : (r.convertedRMB || 0);
             return { totalRM, totalRMB };
         }
 
@@ -1123,76 +1332,56 @@
             renderMonthCharts();
         }
 
-        // 点击“本月总客流量”弹窗查看明细
         function showMonthGuestDetails() {
             const year = calendarDate.getFullYear();
             const month = calendarDate.getMonth();
             const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
             const monthRecords = allRecords.filter(r => r.date && r.date.startsWith(monthPrefix));
 
-            let totalAdults = 0;
-            let totalChildren = 0;
+            let totalAdults = 0, totalChildren = 0;
+            let totalPhotographers = 0, totalPhotoAdults = 0, totalPhotoChildren = 0;
             let totalGuideServices = 0;
 
             monthRecords.forEach(r => {
                 totalAdults += (parseInt(r.adultCount) || 0);
                 totalChildren += (parseInt(r.childCount) || 0);
-                if (r.hasGuide) {
-                    totalGuideServices += 1;
-                }
+                totalPhotographers += (parseInt(r.photographerCount) || 0);
+                totalPhotoAdults += (parseInt(r.photoAdultCount) || 0);
+                totalPhotoChildren += (parseInt(r.photoChildCount) || 0);
+                if (r.hasGuide) totalGuideServices += 1;
             });
 
-            const totalGuests = totalAdults + totalChildren;
+            const totalGuests = totalAdults + totalChildren + totalPhotographers + totalPhotoAdults + totalPhotoChildren;
 
             alert(
                 `📊 ${year}年${month + 1}月 客流与服务明细\n` +
                 `------------------------------------\n` +
-                `👨 成人票：${totalAdults} 张\n` +
-                `🧒 儿童票：${totalChildren} 张\n` +
-                `🚩 导览服务：${totalGuideServices} 次（服务不计入客流人数）\n` +
+                `👨 常规成人票：${totalAdults} 张\n` +
+                `🧒 常规儿童票：${totalChildren} 张\n` +
+                `📷 摄影师人次：${totalPhotographers} 人次\n` +
+                `💃 拍照成人票：${totalPhotoAdults} 张\n` +
+                `👧 拍照儿童票：${totalPhotoChildren} 张\n` +
+                `🚩 导览服务：${totalGuideServices} 次\n` +
                 `------------------------------------\n` +
                 `👥 实际本月总客流量：${totalGuests} 人`
             );
         }
 
-        // 点击“本月总结算收入”弹窗查看各项目收入明细
         function showMonthRevenueDetails() {
             const year = calendarDate.getFullYear();
             const month = calendarDate.getMonth();
             const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
             const monthRecords = allRecords.filter(r => r.date && r.date.startsWith(monthPrefix));
 
-            let totalAdults = 0;
-            let totalChildren = 0;
-            let totalGuideServices = 0;
-
+            let totalRM = 0, totalRMB = 0;
             monthRecords.forEach(r => {
-                totalAdults += (parseInt(r.adultCount) || 0);
-                totalChildren += (parseInt(r.childCount) || 0);
-                if (r.hasGuide) {
-                    totalGuideServices += 1;
-                }
+                const amt = getRecordAmounts(r);
+                totalRM += amt.totalRM;
+                totalRMB += amt.totalRMB;
             });
-
-            // 计算各项单项收入（根据系统的票价：成人票 RM35 / RMB60；儿童票 RM20 / RMB35；导览 RM30 / RMB50）
-            const adultRM = totalAdults * 35;
-            const adultRMB = totalAdults * 60;
-
-            const childRM = totalChildren * 20;
-            const childRMB = totalChildren * 35;
-
-            const guideRM = totalGuideServices * 30;
-            const guideRMB = totalGuideServices * 50;
-
-            const totalRM = adultRM + childRM + guideRM;
-            const totalRMB = adultRMB + childRMB + guideRMB;
 
             alert(
                 `💰 ${year}年${month + 1}月 总结算收入明细\n` +
-                `------------------------------------\n` +
-                `👨 成人票 (${totalAdults}张):\n   RM ${adultRM.toFixed(2)} / RMB ${adultRMB.toFixed(2)}\n\n` +
-                `🧒 儿童票 (${totalChildren}张):\n   RM ${childRM.toFixed(2)} / RMB ${childRMB.toFixed(2)}\n\n` +
-                `🚩 导览服务 (${totalGuideServices}次):\n   RM ${guideRM.toFixed(2)} / RMB ${guideRMB.toFixed(2)}\n` +
                 `------------------------------------\n` +
                 `💵 本月总结算收入总计:\n   RM ${totalRM.toFixed(2)} / RMB ${totalRMB.toFixed(2)}`
             );
@@ -1264,7 +1453,6 @@
             const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
             const monthRecords = allRecords.filter(r => r.date && r.date.startsWith(monthPrefix));
 
-            // 1) 月度时段分布柱状图
             const monthHourlyData = computeHourlyBins(monthRecords);
             if (monthHourlyChartInstance) monthHourlyChartInstance.destroy();
 
@@ -1300,7 +1488,6 @@
                 }
             });
 
-            // 2) 月度支付占比饼图 (文字移至下方图例清单)
             const paymentMapRMB = { '现金': 0, "Touch 'n Go (TnG)": 0, '支付宝': 0, '微信支付': 0 };
             const paymentMapRM = { '现金': 0, "Touch 'n Go (TnG)": 0, '支付宝': 0, '微信支付': 0 };
             let grandTotalRMB = 0;
@@ -1324,10 +1511,7 @@
                 type: 'pie',
                 data: {
                     labels: labels,
-                    datasets: [{
-                        data: dataRMB,
-                        backgroundColor: bgColors
-                    }]
+                    datasets: [{ data: dataRMB, backgroundColor: bgColors }]
                 },
                 options: {
                     responsive: true,
@@ -1337,13 +1521,11 @@
                     plugins: {
                         legend: { display: false },
                         tooltip: { enabled: false },
-                        // 关闭饼图内部所有文字显示，保证外观干净
                         datalabels: { display: false }
                     }
                 }
             });
 
-            // 3) 动态生成饼图下方的自定义图例列表
             const legendContainer = document.getElementById('pieLegendContainer');
             let legendHtml = '';
             labels.forEach(label => {
